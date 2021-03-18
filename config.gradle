@@ -1,0 +1,83 @@
+ext {
+    // Sdk and tools
+    minSdkVersion = 19
+    targetSdkVersion = 30
+    compileSdkVersion = 30
+    buildToolsVersion = '30.0.2'
+    versionCode = 1
+    versionName = '1.0.0'
+    applicationId = 'com.taxiao.cn.apple'
+    testInstrumentationRunner = 'androidx.test.runner.AndroidJUnitRunner'
+    junitVersion = '4.12'
+    junitAndroidXVersion = '1.1.2'
+    espressoCoreAndroidXVersion = '3.3.0'
+
+    // App dependencies
+    androidxAppcompatVersion = '1.2.0'
+    androidxConstraintLayoutVersion = '2.0.4'
+    androidxViewpager2Version = '1.0.0'
+    androidxRecyclerviewVersion = androidxAppcompatVersion
+    androidxSwiperefreshlayoutVersion = androidxAppcompatVersion
+    androidXmaterialVersion = androidxAppcompatVersion
+
+    // NetWork
+    // adapter-rxjava2 不支持 rxjava3
+    okhttp3Version = '4.7.2'
+    retrofit2Version = '2.9.0'
+    rxjava2Version = '2.2.19'
+    rxjava2AndroidVersion = '2.1.1'
+
+    // View
+    butterknifeVersion = BUTTER_KNIFE_VERSION
+    glideVersion = '4.11.0'
+    gsonVersion = '2.8.6'
+    smartRefreshVersion = '2.0.1'
+
+    // Permission
+    xxpermissionsVersion = '5.0'
+
+    // ant
+    antVersion = '1.10.8'
+
+    dependencies = [
+            "appcompat"       : "androidx.appcompat:appcompat:$androidxAppcompatVersion",
+            "constraintLayout": "androidx.constraintlayout:constraintlayout:$androidxConstraintLayoutVersion",
+
+//            "recyclerview"           : "androidx.recyclerview:recyclerview:$androidxRecyclerviewVersion",
+//            "swiperefreshlayout"     : "androidx.swiperefreshlayout:swiperefreshlayout:$androidxSwiperefreshlayoutVersion",
+//            "viewpager2"             : "androidx.viewpager2:viewpager2:$androidxViewpager2Version",
+//            "material"               : "com.google.android.material:material:$androidXmaterialVersion",
+//            "butterknife"            : "com.jakewharton:butterknife:$butterknifeVersion",
+//            "glide"                  : "com.github.bumptech.glide:glide:$glideVersion",
+//            "okhttp3"                : "com.squareup.okhttp3:okhttp:$okhttp3Version",
+//            "retrofit2"              : "com.squareup.retrofit2:retrofit:$retrofit2Version",
+//            "converter_gson"         : "com.squareup.retrofit2:converter-gson:$retrofit2Version",
+//            "adapter_rxjava2"        : "com.squareup.retrofit2:adapter-rxjava2:$retrofit2Version",
+//            "rxjava2"                : "io.reactivex.rxjava2:rxjava:$rxjava2Version",
+//            "rxandroid"              : "io.reactivex.rxjava2:rxandroid:$rxjava2AndroidVersion",
+//            "gson"                   : "com.google.code.gson:gson:$gsonVersion",
+//            "permissions"            : "com.hjq:xxpermissions:$xxpermissionsVersion",
+//            "refresh-layout-kernel"  : "com.scwang.smart:refresh-layout-kernel:$smartRefreshVersion",
+//            "refresh-header-classics": "com.scwang.smart:refresh-header-classics:$smartRefreshVersion",
+//            "refresh-footer-classics": "com.scwang.smart:refresh-footer-classics:$smartRefreshVersion",
+//            "ant"                    : "org.apache.ant:ant:$antVersion",
+    ]
+
+    annotationProcessor = [
+            "butterknife": "com.jakewharton:butterknife-compiler:$rootProject.butterknifeVersion",
+            "glide"      : "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
+    ]
+
+    testImplementation = [
+            "junit": "junit:junit:$rootProject.junitVersion"
+    ]
+
+    androidTestImplementation = [
+            "junit"   : "androidx.test.ext:junit:$rootProject.junitAndroidXVersion",
+            "espresso": "androidx.test.espresso:espresso-core:$rootProject.espressoCoreAndroidXVersion"
+    ]
+
+
+    // 包名，用于存放APT生成的类文件
+    packageNameForAPT = applicationId + ".apt"
+}
