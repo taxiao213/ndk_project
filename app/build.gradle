@@ -12,14 +12,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         resConfigs('zh-rCN', "zh", "en")
-        ndk {
-            abiFilters "armeabi-v7a", "x86"
-        }
-        externalNativeBuild {
-            cmake {
-                cppFlags ""
-            }
-        }
     }
 
     buildTypes {
@@ -28,24 +20,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
-        }
-    }
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
     rootProject.ext.dependencies.each { k, v -> implementation v }
-    rootProject.ext.testImplementation.each { k, v -> testImplementation v }
-    rootProject.ext.androidTestImplementation.each { k, v -> androidTestImplementation v }
+    implementation project(path: ':ffmpeg')
 }

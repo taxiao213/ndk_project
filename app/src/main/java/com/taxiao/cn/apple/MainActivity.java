@@ -7,10 +7,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.taxiao.ffmpeg.JniSdkImpl;
+
 public class MainActivity extends AppCompatActivity {
-    static {
-        System.loadLibrary("native-lib");
-    }
+
+    private JniSdkImpl jniSdk;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,35 +22,45 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_thread = findViewById(R.id.tv_thread);
         TextView tv_call_main_back = findViewById(R.id.tv_call_main_back);
         TextView tv_call_thread_back = findViewById(R.id.tv_call_thread_back);
+        TextView tv_call_ffmpeg_codec = findViewById(R.id.tv_call_ffmpeg_codec);
+        jniSdk = new JniSdkImpl();
+
         tv_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mutexThread();
+                jniSdk.mutexThread();
             }
         });
 
         tv_thread.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startThread();
+                jniSdk.startThread();
             }
         });
 
         tv_call_main_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                javaMain2C();
+                jniSdk.javaMain2C();
             }
         });
 
         tv_call_thread_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                javaThread2C();
+                jniSdk.javaThread2C();
             }
         });
 
-        setOnCallBack(new MyCallBack() {
+        tv_call_ffmpeg_codec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.testFFmpeg();
+            }
+        });
+
+        jniSdk.setOnCallBack(new JniSdkImpl.MyCallBack() {
             @Override
             public void error(int code, String name) {
                 Log.d("callback ", String.format("code=%s, name=%s", code, name));
@@ -62,31 +73,5 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private MyCallBack myCallBack;
-
-    public void setOnCallBack(MyCallBack myCallBack) {
-        this.myCallBack = myCallBack;
-    }
-
-    public interface MyCallBack {
-        void error(int code, String name);
-
-        void success();
-    }
-
-    public void callError(int code, String name) {
-        if (myCallBack != null)
-            myCallBack.error(code, name);
-    }
-
-    public native String stringFromJNI();
-
-    public native void startThread();
-
-    public native void mutexThread();
-
-    public native void javaMain2C();
-
-    public native void javaThread2C();
 
 }
