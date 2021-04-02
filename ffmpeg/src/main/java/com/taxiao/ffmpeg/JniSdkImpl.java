@@ -1,6 +1,7 @@
 package com.taxiao.ffmpeg;
 
 /**
+ * ffmpeg 播放器
  * Created by hanqq on 2021/3/30
  * Email:yin13753884368@163.com
  * CSDN:http://blog.csdn.net/yin13753884368/article

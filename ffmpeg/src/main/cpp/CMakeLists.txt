@@ -35,9 +35,10 @@ add_library(
 
         native-lib.cpp
         javaListener.cpp
+        thread_test.cpp
         )
 
-target_link_libraries( # Specifies the target library.
+target_link_libraries(
         native-lib
         avcodec-57
         avdevice-57
