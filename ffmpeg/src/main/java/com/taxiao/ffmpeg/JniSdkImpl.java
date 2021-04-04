@@ -1,5 +1,7 @@
 package com.taxiao.ffmpeg;
 
+import android.graphics.ImageFormat;
+
 /**
  * ffmpeg 播放器
  * Created by hanqq on 2021/3/30
@@ -9,15 +11,26 @@ package com.taxiao.ffmpeg;
  */
 public class JniSdkImpl {
     static {
+        if (BuildConfig.FFMPEG_BUILD_VERSION == 1) {
+            System.loadLibrary("avcodec-57");
+            System.loadLibrary("avdevice-57");
+            System.loadLibrary("avfilter-6");
+            System.loadLibrary("avformat-57");
+            System.loadLibrary("avutil-55");
+            System.loadLibrary("postproc-54");
+            System.loadLibrary("swresample-2");
+            System.loadLibrary("swscale-4");
+        } else if (BuildConfig.FFMPEG_BUILD_VERSION == 2) {
+            System.loadLibrary("avcodec");
+            System.loadLibrary("avdevice");
+            System.loadLibrary("avfilter");
+            System.loadLibrary("avformat");
+            System.loadLibrary("avutil");
+            System.loadLibrary("postproc");
+            System.loadLibrary("swresample");
+            System.loadLibrary("swscale");
+        }
         System.loadLibrary("native-lib");
-        System.loadLibrary("avcodec-57");
-        System.loadLibrary("avdevice-57");
-        System.loadLibrary("avfilter-6");
-        System.loadLibrary("avformat-57");
-        System.loadLibrary("avutil-55");
-        System.loadLibrary("postproc-54");
-        System.loadLibrary("swresample-2");
-        System.loadLibrary("swscale-4");
     }
 
     public JniSdkImpl() {

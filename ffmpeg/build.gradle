@@ -17,7 +17,18 @@ android {
         }
         externalNativeBuild {
             cmake {
+                arguments "-DFFMPEG_BUILD_VERSION=${Integer.valueOf(FFMPEG_BUILD_VERSION)}"
                 cppFlags "-fexceptions", "-frtti"
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            if (Integer.valueOf(FFMPEG_BUILD_VERSION) == 1) {
+                jniLibs.srcDirs = ['jniLibs/low_version']
+            } else if (Integer.valueOf(FFMPEG_BUILD_VERSION) == 2) {
+                jniLibs.srcDirs = ['jniLibs/high_version']
             }
         }
     }
@@ -26,6 +37,13 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "Integer", "FFMPEG_BUILD_VERSION", "${FFMPEG_BUILD_VERSION}"
+        }
+
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "Integer", "FFMPEG_BUILD_VERSION", "${FFMPEG_BUILD_VERSION}"
         }
     }
 

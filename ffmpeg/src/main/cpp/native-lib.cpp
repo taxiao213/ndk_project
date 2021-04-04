@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+
 #include "pthread.h"
 #include "android_log.h"
 #include "queue"
@@ -24,7 +25,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_startThread(JNIEnv *env, jobject thiz) {
 //    pthread_create(&thread, nullptr, threadCallBack, NULL);
-    ThreadTest* threadTest = new ThreadTest(&thread, "的多大" );
+    ThreadTest *threadTest = new ThreadTest(&thread, "的多大");
 }
 
 // 生产者 消费者
@@ -115,20 +116,22 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_testFFmpeg(JNIEnv *env, jobject thiz) {
-//    av_register_all();
-//    AVCodec *pt_avCodec = av_codec_next(NULL);
-//    while (pt_avCodec != NULL) {
-//        switch (pt_avCodec->type) {
-//            case AVMEDIA_TYPE_VIDEO:
-//                SDK_LOG_D("codec:%s", (pt_avCodec->name));
-//                break;
-//            case AVMEDIA_TYPE_AUDIO:
-//                SDK_LOG_D("codec:%s", (pt_avCodec->name));
-//                break;
-//            case AVMEDIA_TYPE_DATA:
-//                SDK_LOG_D("codec:%s", (pt_avCodec->name));
-//                break;
-//        }
-//        pt_avCodec = pt_avCodec->next;
-//    }
+//    int init = avformat_network_init();
+//    int deinit = avformat_network_deinit();
+//
+//    SDK_LOG_D("init: %d , deinit: %d", init, deinit);
+
+    av_register_all();
+    AVCodec *pt_avCodec = av_codec_next(NULL);
+    while (pt_avCodec != NULL) {
+        switch (pt_avCodec->type) {
+            case AVMEDIA_TYPE_VIDEO:
+                SDK_LOG_D("codec:%s", (pt_avCodec->name));
+                break;
+            case AVMEDIA_TYPE_AUDIO:
+                SDK_LOG_D("codec:%s", (pt_avCodec->name));
+                break;
+        }
+        pt_avCodec = pt_avCodec->next;
+    }
 }
