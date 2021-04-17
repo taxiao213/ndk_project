@@ -56,7 +56,7 @@ ext {
 //            "rxjava2"                : "io.reactivex.rxjava2:rxjava:$rxjava2Version",
 //            "rxandroid"              : "io.reactivex.rxjava2:rxandroid:$rxjava2AndroidVersion",
 //            "gson"                   : "com.google.code.gson:gson:$gsonVersion",
-//            "permissions"            : "com.hjq:xxpermissions:$xxpermissionsVersion",
+            "permissions"            : "com.hjq:xxpermissions:$xxpermissionsVersion",
 //            "refresh-layout-kernel"  : "com.scwang.smart:refresh-layout-kernel:$smartRefreshVersion",
 //            "refresh-header-classics": "com.scwang.smart:refresh-header-classics:$smartRefreshVersion",
 //            "refresh-footer-classics": "com.scwang.smart:refresh-footer-classics:$smartRefreshVersion",

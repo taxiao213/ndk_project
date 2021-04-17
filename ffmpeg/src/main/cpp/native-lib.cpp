@@ -7,12 +7,17 @@
 #include "unistd.h"
 #include "javaListener.h"
 #include "thread_test.h"
+#include "TXFFmpeg.h"
+#include "TXCallJava.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
 }
 
 pthread_t thread;
+TXFFmpeg *ffmpeg;
+TXCallJava *callJava;
+TXPlayStatus *txPlayStatus;
 
 // 创建线程
 void *threadCallBack(void *data) {
@@ -103,16 +108,6 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_javaThread2C(JNIEnv *env, jobject thiz) {
     pthread_create(&threadCall, nullptr, threadCallListener, javaListener);
 }
 
-// 获取JVM
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    jvm = vm;
-    JNIEnv *env;
-    if (jvm->GetEnv((void **) (&env), JNI_VERSION_1_6) != JNI_OK) {
-        return -1;
-    }
-    return JNI_VERSION_1_6;
-}
-
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_testFFmpeg(JNIEnv *env, jobject thiz) {
@@ -121,7 +116,6 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_testFFmpeg(JNIEnv *env, jobject thiz) {
 //
 //    SDK_LOG_D("init: %d , deinit: %d", init, deinit);
 
-    av_register_all();
     AVCodec *pt_avCodec = av_codec_next(NULL);
     while (pt_avCodec != NULL) {
         switch (pt_avCodec->type) {
@@ -133,5 +127,45 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_testFFmpeg(JNIEnv *env, jobject thiz) {
                 break;
         }
         pt_avCodec = pt_avCodec->next;
+    }
+}
+
+// --------------------------------- ffmpeg ---------------------------- //
+
+// 获取JVM
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+    jvm = vm;
+    JNIEnv *env;
+    if (jvm->GetEnv((void **) (&env), JNI_VERSION_1_4) != JNI_OK) {
+        return -1;
+    }
+    return JNI_VERSION_1_4;
+}
+
+/**
+ * ffmpeg 初始化
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1parpared(JNIEnv *env, jobject thiz, jstring path) {
+    const char *url = env->GetStringUTFChars(path, 0);
+    if (ffmpeg == nullptr) {
+        if (callJava == nullptr) {
+            callJava = new TXCallJava(jvm, env, &thiz);
+        }
+        if (txPlayStatus == NULL) {
+            txPlayStatus = new TXPlayStatus();
+        }
+        ffmpeg = new TXFFmpeg(callJava, txPlayStatus, url);
+    }
+    ffmpeg->parpared();
+//    env->ReleaseStringUTFChars(path, url);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != nullptr) {
+        ffmpeg->start();
     }
 }

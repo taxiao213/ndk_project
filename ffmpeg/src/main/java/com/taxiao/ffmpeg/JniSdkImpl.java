@@ -1,6 +1,12 @@
 package com.taxiao.ffmpeg;
 
 import android.graphics.ImageFormat;
+import android.text.TextUtils;
+
+import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * ffmpeg 播放器
@@ -33,13 +39,43 @@ public class JniSdkImpl {
         System.loadLibrary("native-lib");
     }
 
+    private String filePath;
+    private ExecutorService executorService;
+    private IFFmpegParparedListener ifFmpegParparedListener;
+
     public JniSdkImpl() {
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     private MyCallBack myCallBack;
 
     public void setOnCallBack(MyCallBack myCallBack) {
         this.myCallBack = myCallBack;
+    }
+
+    public void setIFFmpegParparedListener(IFFmpegParparedListener fmpegParparedListener) {
+        this.ifFmpegParparedListener = fmpegParparedListener;
+    }
+
+    public void setSource(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public void parpared() {
+        if (!TextUtils.isEmpty(filePath)) {
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    n_parpared(filePath);
+                }
+            });
+        }
+    }
+
+    public void callParpared() {
+        if (ifFmpegParparedListener != null) {
+            ifFmpegParparedListener.parpared();
+        }
     }
 
     public interface MyCallBack {
@@ -62,4 +98,8 @@ public class JniSdkImpl {
     public native void javaThread2C();
 
     public native void testFFmpeg();
+
+    public native void n_parpared(String path);
+
+    public native void start();
 }
