@@ -89,6 +89,11 @@ public class JniSdkImpl {
             myCallBack.error(code, name);
     }
 
+    // 播放 pcm 格式音乐
+    public void playPcm(String path){
+        testPlay(path);
+    }
+
     public native void startThread();
 
     public native void mutexThread();
@@ -102,4 +107,6 @@ public class JniSdkImpl {
     public native void n_parpared(String path);
 
     public native void start();
+
+    public native void testPlay(String path);
 }

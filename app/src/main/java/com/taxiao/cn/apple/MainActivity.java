@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private JniSdkImpl jniSdk;
 
     private String filePath;
+    private String pcmFilePath;
     private ExecutorService executorService;
 
     @Override
@@ -36,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_call_thread_back = findViewById(R.id.tv_call_thread_back);
         TextView tv_call_ffmpeg_codec = findViewById(R.id.tv_call_ffmpeg_codec);
         TextView tv_call_ffmpeg_codec_init = findViewById(R.id.tv_call_ffmpeg_codec_init);
+        TextView tv_paly_pcm = findViewById(R.id.tv_paly_pcm);
         jniSdk = new JniSdkImpl();
 
         tv_start.setOnClickListener(new View.OnClickListener() {
@@ -80,6 +82,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        tv_paly_pcm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.playPcm(pcmFilePath);
+            }
+        });
+
         jniSdk.setOnCallBack(new JniSdkImpl.MyCallBack() {
             @Override
             public void error(int code, String name) {
@@ -98,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 filePath = FileUtils.copyAssetAndWrite(MainActivity.this, "meetyou.mp3");
+                pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
                 LogUtils.d("ffmpeg: file ", filePath + "");
             }
         });

@@ -169,3 +169,12 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
         ffmpeg->start();
     }
 }
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_testPlay(JNIEnv *env, jobject thiz, jstring path) {
+    const char *url = env->GetStringUTFChars(path, 0);
+
+    env->ReleaseStringUTFChars(path,url);
+}

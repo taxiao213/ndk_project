@@ -87,7 +87,8 @@ void TXFFmpeg::start() {
     int count = 0;
     while (1) {
         AVPacket *pPacket = av_packet_alloc();
-        if (av_read_frame(pContext, pPacket) == 0) {
+        int readFrame = av_read_frame(pContext, pPacket);
+        if (readFrame == 0) {
             if (pPacket->stream_index == pAudio->streamIndex) {
                 count++;
                 SDK_LOG_D("解码第 %d 帧 ", count);
@@ -112,12 +113,13 @@ void TXFFmpeg::start() {
         }
     }
 
-    while (pAudio->queue->getQueueSize() > 0) {
-        AVPacket *pPacket = av_packet_alloc();
-        pAudio->queue->getAvpacket(pPacket);
-        av_packet_free(&pPacket);
-        av_free(pPacket);
-        pPacket = NULL;
-    }
+//    while (pAudio->queue->getQueueSize() > 0) {
+//        AVPacket *pPacket = av_packet_alloc();
+//        pAudio->queue->getAvpacket(pPacket);
+//        av_packet_free(&pPacket);
+//        av_free(pPacket);
+//        pPacket = NULL;
+//    }
+    SDK_LOG_D("解码完成");
 }
 
