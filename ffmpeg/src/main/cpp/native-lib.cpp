@@ -14,6 +14,13 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
+//#include <SLES/OpenSLES.h>
+//#include <SLES/OpenSLES_Android.h>
+//#include "assert.h"
+
+#include "Opensles_test.h"
+
+
 pthread_t thread;
 TXFFmpeg *ffmpeg;
 TXCallJava *callJava;
@@ -170,11 +177,12 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
     }
 }
 
+//------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_testPlay(JNIEnv *env, jobject thiz, jstring path) {
     const char *url = env->GetStringUTFChars(path, 0);
-
-    env->ReleaseStringUTFChars(path,url);
+    new Opensles_test{url};
+    env->ReleaseStringUTFChars(path, url);
 }

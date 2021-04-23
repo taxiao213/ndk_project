@@ -62,6 +62,7 @@ add_library(
         TXAudio.cpp
         TXQueue.cpp
         TXPlayStatus.cpp
+        Opensles_test.cpp
 )
 
 target_link_libraries(
