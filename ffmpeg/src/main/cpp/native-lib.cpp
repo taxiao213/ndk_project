@@ -6,7 +6,7 @@
 #include "queue"
 #include "unistd.h"
 #include "javaListener.h"
-#include "thread_test.h"
+#include "test/thread_test.h"
 #include "TXFFmpeg.h"
 #include "TXCallJava.h"
 
@@ -18,7 +18,7 @@ extern "C" {
 //#include <SLES/OpenSLES_Android.h>
 //#include "assert.h"
 
-#include "Opensles_test.h"
+#include "test/Opensles_test.h"
 
 
 pthread_t thread;

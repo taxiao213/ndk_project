@@ -7,7 +7,7 @@
 
 #include <jni.h>
 #include "pthread.h"
-#include "android_log.h"
+#include "../android_log.h"
 
 class ThreadTest {
 public:

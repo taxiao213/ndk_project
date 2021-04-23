@@ -56,13 +56,13 @@ add_library(
 
         native-lib.cpp
         javaListener.cpp
-        thread_test.cpp
         TXCallJava.cpp
         TXFFmpeg.cpp
         TXAudio.cpp
         TXQueue.cpp
         TXPlayStatus.cpp
-        Opensles_test.cpp
+        test/thread_test.cpp
+        test/Opensles_test.cpp
 )
 
 target_link_libraries(

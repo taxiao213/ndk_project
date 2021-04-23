@@ -6,7 +6,7 @@
 #define APPLE_OPENSLES_TEST_H
 
 #include "stdio.h"
-#include "android_log.h"
+#include "../android_log.h"
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include "assert.h"
