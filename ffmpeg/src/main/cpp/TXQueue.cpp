@@ -26,8 +26,9 @@ int TXQueue::putAvpacket(AVPacket *avPacket) {
 
 int TXQueue::getAvpacket(AVPacket *avPacket) {
     pthread_mutex_lock(&pthreadMutex);
-    while (playStatus != NULL && playStatus->exit) {
+    while (playStatus != NULL && !playStatus->exit) {
         if (queueAvpacket.size() > 0) {
+            SDK_LOG_D("getAvpacket 剩余个数为 %d ", queueAvpacket.size());
             AVPacket *&pPacket = queueAvpacket.front();
             // 复制指针
             if (av_packet_ref(avPacket, pPacket) == 0) {

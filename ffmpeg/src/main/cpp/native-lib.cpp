@@ -21,10 +21,10 @@ extern "C" {
 #include "test/Opensles_test.h"
 
 
-pthread_t thread;
-TXFFmpeg *ffmpeg;
-TXCallJava *callJava;
-TXPlayStatus *txPlayStatus;
+pthread_t thread = NULL;
+TXFFmpeg *ffmpeg = NULL;
+TXCallJava *callJava = NULL;
+TXPlayStatus *txPlayStatus = NULL;
 
 // 创建线程
 void *threadCallBack(void *data) {
@@ -166,13 +166,14 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1parpared(JNIEnv *env, jobject thiz, jstring
         ffmpeg = new TXFFmpeg(callJava, txPlayStatus, url);
     }
     ffmpeg->parpared();
-//    env->ReleaseStringUTFChars(path, url);
+    env->ReleaseStringUTFChars(path, url);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
-    if (ffmpeg != nullptr) {
+    if (ffmpeg != NULL) {
+        SDK_LOG_D("start");
         ffmpeg->start();
     }
 }

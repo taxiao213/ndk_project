@@ -27,6 +27,7 @@ static FILE *pcmFile;
 static uint8_t *outbuff;
 static void *buffer;
 
+// 获取pcm 数据
 static int getPcmData(void **pcm) {
     int result = 0;
     while (!feof(pcmFile)) {

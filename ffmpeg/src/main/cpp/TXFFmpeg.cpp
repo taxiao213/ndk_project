@@ -27,7 +27,7 @@ void TXFFmpeg::decodedFFmpegThread() {
     avformat_network_init();
     // 打开文件或者网络流
     pContext = avformat_alloc_context();
-
+    SDK_LOG_D("decodedFFmpegThread 开始解码");
     char *buf;
     int error_code = avformat_open_input(&pContext, url, NULL, NULL);
     if (error_code != 0) {
@@ -43,13 +43,16 @@ void TXFFmpeg::decodedFFmpegThread() {
         SDK_LOG_D("avformat_find_stream_info error");
         return;
     }
-    for (int i = 0; i < pContext->nb_streams; ++i) {
+    SDK_LOG_D("pContext->nb_streams :%d ", pContext->nb_streams);
+    for (int i = 0; i < (pContext->nb_streams); ++i) {
         if (pContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             if (pAudio == NULL) {
+                SDK_LOG_D("pAudio == NULL ");
                 pAudio = new TXAudio(playStatus);
                 pAudio->streamIndex = i;
                 pAudio->codecpar = pContext->streams[i]->codecpar;
             }
+            SDK_LOG_D("pAudio != NULL ");
         }
     }
     // 获取解码器
@@ -80,12 +83,13 @@ void TXFFmpeg::decodedFFmpegThread() {
 }
 
 void TXFFmpeg::start() {
-    if (pAudio == nullptr) {
+    if (pAudio == NULL) {
         SDK_LOG_D("start error");
         return;
     }
     int count = 0;
-    while (1) {
+    pAudio->play();
+    while (playStatus != NULL && !playStatus->exit) {
         AVPacket *pPacket = av_packet_alloc();
         int readFrame = av_read_frame(pContext, pPacket);
         if (readFrame == 0) {
@@ -93,9 +97,9 @@ void TXFFmpeg::start() {
                 count++;
                 SDK_LOG_D("解码第 %d 帧 ", count);
                 pAudio->queue->putAvpacket(pPacket);
-                av_packet_free(&pPacket);
-                av_free(pPacket);
-                pPacket = NULL;
+//                av_packet_free(&pPacket);
+//                av_free(pPacket);
+//                pPacket = NULL;
             } else {
                 av_packet_free(&pPacket);
                 av_free(pPacket);
@@ -107,9 +111,16 @@ void TXFFmpeg::start() {
                 av_free(pPacket);
                 pPacket = NULL;
             }
-            SDK_LOG_D("解码失败");
-            // 会跳出方法，存在问题
-            break;
+            while (playStatus != NULL && !playStatus->exit) {
+                SDK_LOG_D("释放 ");
+                if (pAudio->queue->getQueueSize() > 0) {
+                    continue;
+                } else {
+                    playStatus->exit = true;
+                    break;
+                }
+            }
+
         }
     }
 

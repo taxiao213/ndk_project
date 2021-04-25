@@ -19,11 +19,11 @@ public:
     TXCallJava *callJava = NULL;
     pthread_t decodeThread = NULL;
     const char *url = NULL;
-    AVFormatContext *pContext;
-    TXAudio *pAudio;
-    TXPlayStatus *playStatus;
+    AVFormatContext *pContext = NULL;
+    TXAudio *pAudio = NULL;
+    TXPlayStatus *playStatus = NULL;
 public:
-    TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus * txPlayStatus, const char *url);
+    TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const char *url);
 
     ~TXFFmpeg();
 

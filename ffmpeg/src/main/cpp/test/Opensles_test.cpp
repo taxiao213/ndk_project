@@ -57,13 +57,13 @@ Opensles_test::Opensles_test(const char *url) {
     SLDataLocator_AndroidSimpleBufferQueue androidBufferQueue = {
             SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
     SLDataFormat_PCM pcm = {
-            SL_DATAFORMAT_PCM,//播放pcm格式的数据
-            2,//2个声道（立体声）
-            SL_SAMPLINGRATE_44_1,//44100hz的频率
-            SL_PCMSAMPLEFORMAT_FIXED_16,//位数 16位
-            SL_PCMSAMPLEFORMAT_FIXED_16,//和位数一致就行
-            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,//立体声（前左前右）
-            SL_BYTEORDER_LITTLEENDIAN//结束标志
+            SL_DATAFORMAT_PCM,//输入的音频格式,PCM
+            2,//输入的声道数，2(立体声)
+            SL_SAMPLINGRATE_44_1,//输入的采样率，44100hz44100hz的频率
+            SL_PCMSAMPLEFORMAT_FIXED_16,//输入的采样位数，16bit
+            SL_PCMSAMPLEFORMAT_FIXED_16,//容器大小，同上
+            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,//声道标记，这里使用左前声道和右前声道
+            SL_BYTEORDER_LITTLEENDIAN//输入的字节序,小端
     };
     SLDataSource slDataSource = {&androidBufferQueue, &pcm};
     SLDataSink audioSnk = {&outputMix, NULL};

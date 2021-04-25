@@ -1,20 +1,17 @@
 package com.taxiao.cn.apple;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.res.AssetManager;
 import android.os.Bundle;
-import android.os.Environment;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.XXPermissionsUtils;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -107,8 +104,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 filePath = FileUtils.copyAssetAndWrite(MainActivity.this, "meetyou.mp3");
-                pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
-                LogUtils.d("ffmpeg: file ", filePath + "");
+//                pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
+                // meetyou.mp3 重采样文件 test.pcm 播放
+                pcmFilePath = new File(getCacheDir(), "test.pcm").getAbsolutePath();
+                LogUtils.d("ffmpeg: file ", filePath + "\r\n pcmFilePath: " + pcmFilePath);
             }
         });
 
