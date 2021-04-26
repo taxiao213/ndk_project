@@ -4,9 +4,10 @@
 
 #include "TXAudio.h"
 
-TXAudio::TXAudio(TXPlayStatus *txPlayStatus) {
+TXAudio::TXAudio(TXPlayStatus *txPlayStatus, int sample_rate) {
     SDK_LOG_D("TXAudio ");
     this->playStatus = txPlayStatus;
+    this->sample_rate = sample_rate;
     queue = new TXQueue(playStatus);
     buffer = (uint8_t *) (av_malloc(44100 * 2 * 2));
 }
@@ -15,7 +16,8 @@ TXAudio::TXAudio(TXPlayStatus *txPlayStatus) {
 void *decodePlay(void *data) {
     SDK_LOG_D("decodePlay");
     TXAudio *txAudio = (TXAudio *) (data);
-    txAudio->resampleAudio();
+//    txAudio->resampleAudio();
+    txAudio->initOpenSLES();
     pthread_exit(&(txAudio->p_thread));
 }
 
@@ -24,11 +26,10 @@ void TXAudio::play() {
     pthread_create(&p_thread, NULL, decodePlay, this);
 }
 
-FILE *outFile = fopen("/data/data/com.taxiao.cn.apple/cache/test.pcm", "w");
+//FILE *outFile = fopen("/data/data/com.taxiao.cn.apple/cache/test.pcm", "w");
 
 int TXAudio::resampleAudio() {
     SDK_LOG_D("resampleAudio");
-    int size = 0;
     while (playStatus != NULL && !playStatus->exit) {
         SDK_LOG_D("resampleAudio 获取数据");
         avPacket = av_packet_alloc();
@@ -88,7 +89,7 @@ int TXAudio::resampleAudio() {
             data_size = convert * channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 
             // 写入文件
-            fwrite(buffer, 1, data_size, outFile);
+//            fwrite(buffer, 1, data_size, outFile);
             SDK_LOG_D("resampleAudio 写入文件");
 
             av_packet_free(&avPacket);
@@ -99,7 +100,7 @@ int TXAudio::resampleAudio() {
             avFrame = NULL;
             swr_free(&swrContext);
             swrContext = NULL;
-
+            break;
         } else {
             av_packet_free(&avPacket);
             av_free(avPacket);
@@ -107,9 +108,191 @@ int TXAudio::resampleAudio() {
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
+            continue;
         }
     }
-
-
-    return size;
+    return data_size;
 }
+
+void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
+    TXAudio *txAudio = (TXAudio *) context;
+    if (txAudio != NULL) {
+        int bufferSize = txAudio->resampleAudio();
+        if (bufferSize > 0) {
+            SDK_LOG_D("bqPlayerCallback %d ", bufferSize);
+            (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
+                                                     (char *) txAudio->buffer,
+                                                     bufferSize);
+        }
+    }
+}
+
+int TXAudio::getCurrentSimpleRate(int sample_rate) {
+    int rate = 0;
+    switch (sample_rate) {
+        case 8000:
+            rate = SL_SAMPLINGRATE_8;
+            break;
+        case 11025:
+            rate = SL_SAMPLINGRATE_11_025;
+            break;
+        case 12000:
+            rate = SL_SAMPLINGRATE_12;
+            break;
+        case 16000:
+            rate = SL_SAMPLINGRATE_16;
+            break;
+        case 22050:
+            rate = SL_SAMPLINGRATE_22_05;
+            break;
+        case 24000:
+            rate = SL_SAMPLINGRATE_24;
+            break;
+        case 32000:
+            rate = SL_SAMPLINGRATE_32;
+            break;
+        case 44100:
+            rate = SL_SAMPLINGRATE_44_1;
+            break;
+        case 48000:
+            rate = SL_SAMPLINGRATE_48;
+            break;
+        case 64000:
+            rate = SL_SAMPLINGRATE_64;
+            break;
+        case 88200:
+            rate = SL_SAMPLINGRATE_88_2;
+            break;
+        case 96000:
+            rate = SL_SAMPLINGRATE_96;
+            break;
+        case 192000:
+            rate = SL_SAMPLINGRATE_192;
+            break;
+        default:
+            rate = SL_SAMPLINGRATE_44_1;
+    }
+    return rate;
+}
+
+void TXAudio::initOpenSLES() {
+    SDK_LOG_D("intOpenSLES");
+    SLresult result;
+    // 1.create engine
+    result = slCreateEngine(&engineObject, 0, 0, 0, 0, 0);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+
+    // 2.realize the engine
+    result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("realize the engine");
+
+    // 3.get the engine interface, which is needed in order to create other objects
+    result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("get the engine interface");
+
+    // 4.create output mix, with environmental reverb specified as a non-required interface
+    const SLInterfaceID ids[1] = {SL_IID_ENVIRONMENTALREVERB};
+    const SLboolean req[1] = {SL_BOOLEAN_FALSE};
+    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, ids, req);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("create output mix");
+
+    // 5.realize the output mix
+    result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("realize the output mix");
+
+    // 6. // get the environmental reverb interface
+    //    // this could fail if the environmental reverb effect is not available,
+    //    // either because the feature is not present, excessive CPU load, or
+    //    // the required MODIFY_AUDIO_SETTINGS permission was not requested and granted
+    result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB,
+                                              &outputMixEnvironmentalReverb);
+    if (SL_RESULT_SUCCESS == result) {
+        result = (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(
+                outputMixEnvironmentalReverb, &reverbSettings);
+        (void) result;
+    }
+
+    // configure audio sink
+    SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
+
+    // 7.创建播放器 SLDataLocator_AndroidBufferQueue 会报错
+    SLDataLocator_AndroidSimpleBufferQueue androidBufferQueue = {
+            SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
+    SLDataFormat_PCM pcm = {
+            SL_DATAFORMAT_PCM,//输入的音频格式,PCM
+            2,//输入的声道数，2(立体声)
+            static_cast<SLuint32>(getCurrentSimpleRate(sample_rate)),//输入的采样率，44100hz的频率
+            SL_PCMSAMPLEFORMAT_FIXED_16,//输入的采样位数，16bit
+            SL_PCMSAMPLEFORMAT_FIXED_16,//容器大小，同上
+            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,//声道标记，这里使用左前声道和右前声道
+            SL_BYTEORDER_LITTLEENDIAN//输入的字节序,小端
+    };
+    SLDataSource slDataSource = {&androidBufferQueue, &pcm};
+    SLDataSink audioSnk = {&outputMix, NULL};
+    SDK_LOG_D("创建播放器");
+
+    /*
+    * create audio player:
+    * fast audio does not support when SL_IID_EFFECTSEND is required, skip it
+    * for fast audio case
+    */
+    const SLInterfaceID audio_ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME};
+    const SLboolean audio_req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+//    const SLInterfaceID audio_ids[1] = {SL_IID_BUFFERQUEUE};
+//    const SLboolean audio_req[1] = {SL_BOOLEAN_TRUE};
+
+    // create audio player:
+    result = (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayObject, &slDataSource,
+                                                &audioSnk, 3, audio_ids, audio_req);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+
+    // realize the player
+    result = (*pcmPlayObject)->Realize(pcmPlayObject, SL_BOOLEAN_FALSE);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("realize the player");
+
+    // get the play interface
+    result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_PLAY, &bqPlayerPlay);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+
+    // get the buffer queue interface
+    result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_BUFFERQUEUE,
+                                            &bqPlayerBufferQueue);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("get the buffer");
+
+    // 设置回调函数
+    result = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, this);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("设置回调函数");
+
+    // 获取音量接口
+//    result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_VOLUME, &pcmPlayerVolume);
+//    assert(SL_RESULT_SUCCESS == result);
+//    (void) result;
+
+    // 设置播放状态
+    result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+    SDK_LOG_D("设置播放状态");
+
+    bqPlayerCallback(bqPlayerBufferQueue, this);
+    SDK_LOG_D("video complate");
+
+}
+

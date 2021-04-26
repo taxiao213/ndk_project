@@ -34,7 +34,7 @@ Opensles_test::Opensles_test(const char *url) {
     (void) result;
 
     // 5.realize the output mix
-    (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
 

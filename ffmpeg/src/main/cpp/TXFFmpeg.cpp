@@ -48,7 +48,7 @@ void TXFFmpeg::decodedFFmpegThread() {
         if (pContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             if (pAudio == NULL) {
                 SDK_LOG_D("pAudio == NULL ");
-                pAudio = new TXAudio(playStatus);
+                pAudio = new TXAudio(playStatus, pContext->streams[i]->codecpar->sample_rate);
                 pAudio->streamIndex = i;
                 pAudio->codecpar = pContext->streams[i]->codecpar;
             }

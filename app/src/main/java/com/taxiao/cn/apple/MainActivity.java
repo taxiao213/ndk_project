@@ -106,8 +106,14 @@ public class MainActivity extends AppCompatActivity {
                 filePath = FileUtils.copyAssetAndWrite(MainActivity.this, "meetyou.mp3");
 //                pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
                 // meetyou.mp3 重采样文件 test.pcm 播放
-                pcmFilePath = new File(getCacheDir(), "test.pcm").getAbsolutePath();
-                LogUtils.d("ffmpeg: file ", filePath + "\r\n pcmFilePath: " + pcmFilePath);
+
+                File file = new File(getCacheDir(), "test.pcm");
+                if (file.exists()) {
+                    pcmFilePath = file.getAbsolutePath();
+                    LogUtils.d("ffmpeg: file ", filePath + "\r\n pcmFilePath: " + pcmFilePath);
+                } else {
+                    pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
+                }
             }
         });
 
