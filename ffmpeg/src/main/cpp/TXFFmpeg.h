@@ -33,6 +33,10 @@ public:
     void decodedFFmpegThread();
 
     void start();
+
+    void resume();
+
+    void pause();
 };
 
 

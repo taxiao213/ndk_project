@@ -48,7 +48,8 @@ void TXFFmpeg::decodedFFmpegThread() {
         if (pContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             if (pAudio == NULL) {
                 SDK_LOG_D("pAudio == NULL ");
-                pAudio = new TXAudio(playStatus, pContext->streams[i]->codecpar->sample_rate);
+                pAudio = new TXAudio(playStatus, callJava,
+                                     pContext->streams[i]->codecpar->sample_rate);
                 pAudio->streamIndex = i;
                 pAudio->codecpar = pContext->streams[i]->codecpar;
             }
@@ -132,5 +133,17 @@ void TXFFmpeg::start() {
 //        pPacket = NULL;
 //    }
     SDK_LOG_D("解码完成");
+}
+
+void TXFFmpeg::resume() {
+    if (pAudio != NULL) {
+        pAudio->resume();
+    }
+}
+
+void TXFFmpeg::pause() {
+    if (pAudio != NULL) {
+        pAudio->pause();
+    }
 }
 

@@ -4,12 +4,13 @@
 
 #include "TXAudio.h"
 
-TXAudio::TXAudio(TXPlayStatus *txPlayStatus, int sample_rate) {
+TXAudio::TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate) {
     SDK_LOG_D("TXAudio ");
     this->playStatus = txPlayStatus;
     this->sample_rate = sample_rate;
+    this->txCallJava = txCallJava;
     queue = new TXQueue(playStatus);
-    buffer = (uint8_t *) (av_malloc(44100 * 2 * 2));
+    buffer = (uint8_t *) (av_malloc(sample_rate * 2 * 2));
 }
 
 // 重采样
@@ -31,6 +32,21 @@ void TXAudio::play() {
 int TXAudio::resampleAudio() {
     SDK_LOG_D("resampleAudio");
     while (playStatus != NULL && !playStatus->exit) {
+        if (queue->getQueueSize() == 0) {
+            SDK_LOG_D("resampleAudio 加载");
+            if (!playStatus->load) {
+                playStatus->load = true;
+                txCallJava->onLoad(CHILD_THREAD, true);
+            }
+            continue;
+        } else {
+            SDK_LOG_D("resampleAudio 播放");
+            if (playStatus->load) {
+                playStatus->load = false;
+                txCallJava->onLoad(CHILD_THREAD, false);
+            }
+        }
+
         SDK_LOG_D("resampleAudio 获取数据");
         avPacket = av_packet_alloc();
         if (queue->getAvpacket(avPacket) != 0) {
@@ -296,3 +312,12 @@ void TXAudio::initOpenSLES() {
 
 }
 
+// 恢复播放
+void TXAudio::resume() {
+    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay,SL_PLAYSTATE_PLAYING);
+}
+
+// 暂停播放
+void TXAudio::pause() {
+    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay,SL_PLAYSTATE_PAUSED);
+}

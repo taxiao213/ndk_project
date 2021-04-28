@@ -13,4 +13,10 @@ public interface IFFmpegParparedListener {
     void start();
 
     void stop();
+
+    void onLoad(boolean isLoad);
+
+    void onPause();
+
+    void onResume();
 }

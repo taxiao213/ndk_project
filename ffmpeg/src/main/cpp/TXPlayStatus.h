@@ -8,8 +8,8 @@
 
 class TXPlayStatus {
 public :
-//    int status;
     bool exit;
+    bool load;
 public :
     TXPlayStatus();
 

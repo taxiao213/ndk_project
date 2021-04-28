@@ -156,8 +156,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_n_1parpared(JNIEnv *env, jobject thiz, jstring path) {
     const char *url = env->GetStringUTFChars(path, 0);
-    if (ffmpeg == nullptr) {
-        if (callJava == nullptr) {
+    if (ffmpeg == NULL) {
+        if (callJava == NULL) {
             callJava = new TXCallJava(jvm, env, &thiz);
         }
         if (txPlayStatus == NULL) {
@@ -178,6 +178,21 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
     }
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_resume(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        ffmpeg->resume();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_pause(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        ffmpeg->pause();
+    }
+}
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"

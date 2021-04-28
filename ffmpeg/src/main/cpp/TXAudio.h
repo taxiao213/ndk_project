@@ -6,6 +6,7 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include "assert.h"
+#include "TXCallJava.h"
 #include <malloc.h>
 
 extern "C" {
@@ -30,6 +31,7 @@ public:
     uint8_t *buffer = NULL;
     int data_size = 0;
     int sample_rate = 0;
+    TXCallJava *txCallJava = NULL;
 
     // OpenSLES
     SLObjectItf engineObject = NULL;
@@ -43,7 +45,7 @@ public:
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue = NULL;
 
 public:
-    TXAudio(TXPlayStatus *txPlayStatus, int sample_rate);
+    TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 
     ~TXAudio();
 
@@ -52,6 +54,10 @@ public:
     int resampleAudio();
 
     void initOpenSLES();
+
+    void resume();
+
+    void pause();
 
     int getCurrentSimpleRate(int sample_rate);
 };

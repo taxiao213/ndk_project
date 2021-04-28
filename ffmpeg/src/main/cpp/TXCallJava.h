@@ -3,10 +3,12 @@
 //
 #include "jni.h"
 #include "android_log.h"
+
 #ifndef APPLE_FFMPEGCALLJAVA_H
 #define APPLE_FFMPEGCALLJAVA_H
 
 #define JAVA_METHOD_PARPARED "callParpared"
+#define JAVA_METHOD_LOAD "callOnLoad"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -16,14 +18,16 @@ public:
     JNIEnv *jniEnv;
     jobject job;
     jmethodID jmethodId;
+    jmethodID jmethodIdCallLoad;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
 
-    void onParpared(int type);
-
     ~TXCallJava();
 
+    void onParpared(int type);
+
+    void onLoad(int type, bool isLoad);
 };
 
 

@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
-
+    private String TAG = MainActivity.this.getClass().getSimpleName();
     private JniSdkImpl jniSdk;
 
     private String filePath;
@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_call_ffmpeg_codec = findViewById(R.id.tv_call_ffmpeg_codec);
         TextView tv_call_ffmpeg_codec_init = findViewById(R.id.tv_call_ffmpeg_codec_init);
         TextView tv_paly_pcm = findViewById(R.id.tv_paly_pcm);
+        TextView tv_paly_resume = findViewById(R.id.tv_paly_resume);
+        TextView tv_paly_pause = findViewById(R.id.tv_paly_pause);
         jniSdk = new JniSdkImpl();
 
         tv_start.setOnClickListener(new View.OnClickListener() {
@@ -69,6 +71,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 jniSdk.testFFmpeg();
+            }
+        });
+
+        tv_paly_resume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.callOnResume();
+            }
+        });
+
+        tv_paly_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.callOnPause();
             }
         });
 
@@ -133,6 +149,25 @@ public class MainActivity extends AppCompatActivity {
             public void stop() {
 
             }
+
+            @Override
+            public void onLoad(boolean isLoad) {
+//                if (isLoad) {
+//                    LogUtils.d("ffmpeg: 加载中");
+//                } else {
+//                    LogUtils.d("ffmpeg: 播放中");
+//                }
+            }
+
+            @Override
+            public void onPause() {
+                LogUtils.d(TAG, "ffmpeg: 暂停");
+            }
+
+            @Override
+            public void onResume() {
+                LogUtils.d(TAG, "ffmpeg: 播放");
+            }
         });
         XXPermissionsUtils.getInstances().hasReadAndWritePermission(new Function<Boolean>() {
             @Override
@@ -144,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void parpared() {
         // https 的链接端口无法识别
+        //       ` jniSdk.callOnLoad(true);`
         jniSdk.setSource(filePath);
         jniSdk.parpared();
     }

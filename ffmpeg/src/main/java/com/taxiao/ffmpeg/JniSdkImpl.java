@@ -78,6 +78,26 @@ public class JniSdkImpl {
         }
     }
 
+    public void callOnLoad(boolean isLoad) {
+        if (ifFmpegParparedListener != null) {
+            ifFmpegParparedListener.onLoad(isLoad);
+        }
+    }
+
+    public void callOnResume() {
+        resume();
+        if (ifFmpegParparedListener != null) {
+            ifFmpegParparedListener.onResume();
+        }
+    }
+
+    public void callOnPause() {
+        pause();
+        if (ifFmpegParparedListener != null) {
+            ifFmpegParparedListener.onPause();
+        }
+    }
+
     public interface MyCallBack {
         void error(int code, String name);
 
@@ -90,7 +110,7 @@ public class JniSdkImpl {
     }
 
     // 播放 pcm 格式音乐
-    public void playPcm(String path){
+    public void playPcm(String path) {
         testPlay(path);
     }
 
@@ -107,6 +127,10 @@ public class JniSdkImpl {
     public native void n_parpared(String path);
 
     public native void start();
+
+    public native void resume();
+
+    public native void pause();
 
     public native void testPlay(String path);
 }

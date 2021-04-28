@@ -12,6 +12,7 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
     jclass aClass = jniEnv->GetObjectClass(job);
     if (aClass) {
         jmethodId = jniEnv->GetMethodID(aClass, JAVA_METHOD_PARPARED, "()V");
+        jmethodIdCallLoad = jniEnv->GetMethodID(aClass, JAVA_METHOD_LOAD, "(Z)V");
     }
 }
 
@@ -25,6 +26,20 @@ void TXCallJava::onParpared(int type) {
             return;
         }
         env->CallVoidMethod(job, jmethodId);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+void TXCallJava::onLoad(int type, bool isLoad) {
+    SDK_LOG_D("isload%d", isLoad);
+    if (type == MAIN_THREAD) {
+        jniEnv->CallBooleanMethod(job, jmethodIdCallLoad, isLoad);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        env->CallBooleanMethod(job, jmethodIdCallLoad, isLoad);
         javaVm->DetachCurrentThread();
     }
 }

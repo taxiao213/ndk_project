@@ -95,6 +95,28 @@
             android:text="play pcm"
             android:textColor="@android:color/black" />
 
+
+        <TextView
+            android:id="@+id/tv_paly_resume"
+            android:layout_width="180dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/darker_gray"
+            android:gravity="center"
+            android:text="play start"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/tv_paly_pause"
+            android:layout_width="180dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/darker_gray"
+            android:gravity="center"
+            android:text="play pause"
+            android:textColor="@android:color/black" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
 
