@@ -103,6 +103,12 @@ int TXAudio::resampleAudio() {
             int channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
 
             data_size = convert * channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            // 帧数* （时间/帧数）
+            now_time = avFrame->pts * av_q2d(avRational);
+            if (now_time < clock) {
+                now_time = clock;
+            }
+            clock = now_time;
 
             // 写入文件
 //            fwrite(buffer, 1, data_size, outFile);
@@ -136,6 +142,13 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
         int bufferSize = txAudio->resampleAudio();
         if (bufferSize > 0) {
             SDK_LOG_D("bqPlayerCallback %d ", bufferSize);
+            // buffer 理论上播放需要的时间
+            txAudio->clock += bufferSize / ((double) (txAudio->sample_rate * 2 * 2));
+            if (txAudio->clock - txAudio->last_time >= 0.1) {
+                txAudio->last_time = txAudio->clock;
+                txAudio->txCallJava
+                        ->onTimeInfo(CHILD_THREAD, txAudio->clock, txAudio->duration);
+            }
             (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
                                                      (char *) txAudio->buffer,
                                                      bufferSize);
@@ -314,10 +327,10 @@ void TXAudio::initOpenSLES() {
 
 // 恢复播放
 void TXAudio::resume() {
-    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay,SL_PLAYSTATE_PLAYING);
+    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
 }
 
 // 暂停播放
 void TXAudio::pause() {
-    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay,SL_PLAYSTATE_PAUSED);
+    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PAUSED);
 }

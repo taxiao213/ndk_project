@@ -12,6 +12,7 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
+#include <libavutil/rational.h>
 }
 
 #ifndef APPLE_TXAUDIO_H
@@ -44,6 +45,12 @@ public:
     SLPlayItf bqPlayerPlay = NULL;
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue = NULL;
 
+    // duration
+    int duration = 0; // 总时间
+    AVRational avRational; // 总时间/总帧数
+    double now_time = 0.0; // 现在时间
+    double clock = 0.0; // 当前时间
+    double last_time = 0.0;
 public:
     TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 

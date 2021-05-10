@@ -52,6 +52,8 @@ void TXFFmpeg::decodedFFmpegThread() {
                                      pContext->streams[i]->codecpar->sample_rate);
                 pAudio->streamIndex = i;
                 pAudio->codecpar = pContext->streams[i]->codecpar;
+                pAudio->duration = pContext->duration / AV_TIME_BASE;
+                pAudio->avRational = pContext->streams[i]->time_base;
             }
             SDK_LOG_D("pAudio != NULL ");
         }

@@ -9,6 +9,7 @@
 
 #define JAVA_METHOD_PARPARED "callParpared"
 #define JAVA_METHOD_LOAD "callOnLoad"
+#define JAVA_METHOD_TIME_INFO "callTimeInfo"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -19,6 +20,7 @@ public:
     jobject job;
     jmethodID jmethodId;
     jmethodID jmethodIdCallLoad;
+    jmethodID jmethodIdTimeInfo;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -28,6 +30,8 @@ public:
     void onParpared(int type);
 
     void onLoad(int type, bool isLoad);
+
+    void onTimeInfo(int type, int currentTime, int total);
 };
 
 

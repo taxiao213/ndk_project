@@ -4,6 +4,8 @@ import android.graphics.ImageFormat;
 import android.text.TextUtils;
 
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
+import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
+import com.taxiao.ffmpeg.utils.TimeInfoModel;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +44,8 @@ public class JniSdkImpl {
     private String filePath;
     private ExecutorService executorService;
     private IFFmpegParparedListener ifFmpegParparedListener;
+    private IFFmpegTimeListener ifFmpegTimeListener;
+    private static TimeInfoModel timeInfoModel;
 
     public JniSdkImpl() {
         executorService = Executors.newSingleThreadExecutor();
@@ -55,6 +59,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegParparedListener(IFFmpegParparedListener fmpegParparedListener) {
         this.ifFmpegParparedListener = fmpegParparedListener;
+    }
+
+    public void setIFFmpegTimeListener(IFFmpegTimeListener fFmpegTimeListener) {
+        this.ifFmpegTimeListener = fFmpegTimeListener;
     }
 
     public void setSource(String filePath) {
@@ -72,18 +80,46 @@ public class JniSdkImpl {
         }
     }
 
+    // -------------------------   c++ 回调函数 --------------------------------------
+
+    /**
+     * c++ 时间回调
+     *
+     * @param currentTime
+     * @param totalTime
+     */
+    public void callTimeInfo(int currentTime, int totalTime) {
+        if (ifFmpegTimeListener != null) {
+            if (timeInfoModel == null) {
+                timeInfoModel = new TimeInfoModel();
+            }
+            timeInfoModel.setCurrentTime(currentTime);
+            timeInfoModel.setTotalTime(totalTime);
+            ifFmpegTimeListener.onTimeInfo(timeInfoModel);
+        }
+    }
+
+    /**
+     * c++ 准备就绪回调
+     */
     public void callParpared() {
         if (ifFmpegParparedListener != null) {
             ifFmpegParparedListener.parpared();
         }
     }
 
+    /**
+     * c++
+     */
     public void callOnLoad(boolean isLoad) {
         if (ifFmpegParparedListener != null) {
             ifFmpegParparedListener.onLoad(isLoad);
         }
     }
 
+    /**
+     * 开始
+     */
     public void callOnResume() {
         resume();
         if (ifFmpegParparedListener != null) {
@@ -91,6 +127,9 @@ public class JniSdkImpl {
         }
     }
 
+    /**
+     * 暂停
+     */
     public void callOnPause() {
         pause();
         if (ifFmpegParparedListener != null) {
@@ -133,4 +172,6 @@ public class JniSdkImpl {
     public native void pause();
 
     public native void testPlay(String path);
+
+
 }

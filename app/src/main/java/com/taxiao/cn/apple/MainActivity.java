@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
+import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
+import com.taxiao.ffmpeg.utils.TimeInfoModel;
 import com.taxiao.ffmpeg.utils.XXPermissionsUtils;
 
 import java.io.File;
@@ -22,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private String filePath;
     private String pcmFilePath;
     private ExecutorService executorService;
+    private TextView tv_time_call;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_paly_pcm = findViewById(R.id.tv_paly_pcm);
         TextView tv_paly_resume = findViewById(R.id.tv_paly_resume);
         TextView tv_paly_pause = findViewById(R.id.tv_paly_pause);
+        tv_time_call = findViewById(R.id.tv_time_call);
         jniSdk = new JniSdkImpl();
 
         tv_start.setOnClickListener(new View.OnClickListener() {
@@ -169,6 +173,21 @@ public class MainActivity extends AppCompatActivity {
                 LogUtils.d(TAG, "ffmpeg: 播放");
             }
         });
+
+        jniSdk.setIFFmpegTimeListener(new IFFmpegTimeListener() {
+            @Override
+            public void onTimeInfo(final TimeInfoModel timeInfoModel) {
+                LogUtils.d(TAG, "currentTime : " + timeInfoModel.getCurrentTime() + " total: " + timeInfoModel.getTotalTime());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 播放时间
+                        tv_time_call.setText(String.format("%d:%d", timeInfoModel.getCurrentTime(), timeInfoModel.getTotalTime()));
+                    }
+                });
+            }
+        });
+
         XXPermissionsUtils.getInstances().hasReadAndWritePermission(new Function<Boolean>() {
             @Override
             public void action(Boolean var) {
