@@ -11,6 +11,7 @@ TXQueue::TXQueue(TXPlayStatus *status) {
 }
 
 TXQueue::~TXQueue() {
+    clearAvpacket();
     pthread_cond_destroy(&pthreadCond);
     pthread_mutex_destroy(&pthreadMutex);
 }
@@ -53,4 +54,17 @@ int TXQueue::getQueueSize() {
     size = queueAvpacket.size();
     pthread_mutex_unlock(&pthreadMutex);
     return size;
+}
+
+void TXQueue::clearAvpacket() {
+    pthread_cond_signal(&pthreadCond);
+    pthread_mutex_lock(&pthreadMutex);
+    while (!queueAvpacket.empty()) {
+        AVPacket *&pPacket = queueAvpacket.front();
+        queueAvpacket.pop();
+        av_packet_free(&pPacket);
+        av_free(pPacket);
+        pPacket = NULL;
+    }
+    pthread_mutex_unlock(&pthreadMutex);
 }

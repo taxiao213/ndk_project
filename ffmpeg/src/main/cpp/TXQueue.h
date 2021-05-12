@@ -21,7 +21,7 @@ public:
     pthread_mutex_t pthreadMutex;
     TXPlayStatus *playStatus;
 public:
-    TXQueue(TXPlayStatus* status);
+    TXQueue(TXPlayStatus *status);
 
     ~TXQueue();
 
@@ -30,6 +30,9 @@ public:
     int getAvpacket(AVPacket *avPacket);
 
     int getQueueSize();
+
+    // 释放队列资源
+    void clearAvpacket();
 };
 
 

@@ -327,10 +327,61 @@ void TXAudio::initOpenSLES() {
 
 // 恢复播放
 void TXAudio::resume() {
-    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
+    if (bqPlayerPlay != NULL) {
+        (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
+    }
 }
 
 // 暂停播放
 void TXAudio::pause() {
-    (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PAUSED);
+    if (bqPlayerPlay != NULL) {
+        (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PAUSED);
+    }
+}
+
+// 停止播放
+void TXAudio::stop() {
+    if (bqPlayerPlay != NULL) {
+        (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
+    }
+}
+
+void TXAudio::release() {
+    stop();
+    if (queue != NULL) {
+        delete (queue);
+        queue = NULL;
+    }
+    if (pcmPlayObject != NULL) {
+        (*pcmPlayObject)->Destroy(pcmPlayObject);
+        pcmPlayObject = NULL;
+    }
+    if (outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+    }
+    if (engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+    }
+    if (buffer != NULL) {
+        free(buffer);
+        buffer = NULL;
+    }
+    if (pCodecContext != NULL) {
+        avcodec_close(pCodecContext);
+        avcodec_free_context(&pCodecContext);
+        pCodecContext = NULL;
+    }
+    if (playStatus != NULL) {
+        playStatus = NULL;
+    }
+    if (txCallJava != NULL) {
+        txCallJava = NULL;
+    }
+
+}
+
+TXAudio::~TXAudio() {
+
 }

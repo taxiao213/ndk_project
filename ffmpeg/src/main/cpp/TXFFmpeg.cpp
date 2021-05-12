@@ -9,6 +9,7 @@ TXFFmpeg::TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const cha
     this->callJava = txCallJava;
     this->url = url;
     this->playStatus = txPlayStatus;
+    pthread_mutex_init(&initMutex, NULL);
 }
 
 void *decodeFFmpeg(void *data) {
@@ -21,12 +22,26 @@ void TXFFmpeg::parpared() {
     pthread_create(&decodeThread, NULL, decodeFFmpeg, this);
 }
 
+// 失败的返回值
+int ffmpegCallBack(void *pVoid) {
+    TXFFmpeg *txfFmpeg = (TXFFmpeg *) pVoid;
+    if (txfFmpeg->playStatus->exit) {
+        return AVERROR_EOF;
+    }
+    return 0;
+}
+
 void TXFFmpeg::decodedFFmpegThread() {
+    pthread_mutex_lock(&initMutex);
     // 注册解码器并初始化网络
     av_register_all();
     avformat_network_init();
     // 打开文件或者网络流
     pContext = avformat_alloc_context();
+
+    pContext->interrupt_callback.callback = ffmpegCallBack;
+    pContext->interrupt_callback.opaque = this;
+
     SDK_LOG_D("decodedFFmpegThread 开始解码");
     char *buf;
     int error_code = avformat_open_input(&pContext, url, NULL, NULL);
@@ -37,10 +52,14 @@ void TXFFmpeg::decodedFFmpegThread() {
             SDK_LOG_D("avformat_open_input error code: %d , str: %s , url: %s", error_code, buf,
                       url);
         }
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
     if (avformat_find_stream_info(pContext, NULL) < 0) {
         SDK_LOG_D("avformat_find_stream_info error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
     SDK_LOG_D("pContext->nb_streams :%d ", pContext->nb_streams);
@@ -62,6 +81,8 @@ void TXFFmpeg::decodedFFmpegThread() {
     AVCodec *pCodec = avcodec_find_decoder(pAudio->codecpar->codec_id);
     if (!pCodec) {
         SDK_LOG_D("avcodec_find_decoder error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
 
@@ -69,20 +90,26 @@ void TXFFmpeg::decodedFFmpegThread() {
     pAudio->pCodecContext = avcodec_alloc_context3(pCodec);
     if (!pAudio) {
         SDK_LOG_D("avcodec_alloc_context3 error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
 
     if (avcodec_parameters_to_context(pAudio->pCodecContext, pAudio->codecpar) < 0) {
         SDK_LOG_D("avcodec_parameters_to_context error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
 
     if (avcodec_open2(pAudio->pCodecContext, pCodec, 0) != 0) {
         SDK_LOG_D("avcodec_open2 error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
         return;
     }
     this->callJava->onParpared(CHILD_THREAD);
-
+    pthread_mutex_unlock(&initMutex);
 }
 
 void TXFFmpeg::start() {
@@ -126,7 +153,7 @@ void TXFFmpeg::start() {
 
         }
     }
-
+    exit = true;
 //    while (pAudio->queue->getQueueSize() > 0) {
 //        AVPacket *pPacket = av_packet_alloc();
 //        pAudio->queue->getAvpacket(pPacket);
@@ -147,5 +174,43 @@ void TXFFmpeg::pause() {
     if (pAudio != NULL) {
         pAudio->pause();
     }
+}
+
+void TXFFmpeg::release() {
+    if (playStatus->exit) {
+        return;
+    }
+    playStatus->exit = true;
+    pthread_mutex_lock(&initMutex);
+    int sleepCount = 0;
+    while (!exit) {
+        if (sleepCount > 1000) {
+            exit = true;
+        }
+        SDK_LOG_D("wait ffmpeg %d", sleepCount);
+        sleepCount++;
+        av_usleep(1000 * 10);
+    }
+    if (pAudio != NULL) {
+        pAudio->release();
+        delete (pAudio);
+        pAudio = NULL;
+    }
+    if (pContext != NULL) {
+        avformat_close_input(&pContext);
+        avformat_free_context(pContext);
+        pContext = NULL;
+    }
+    if (callJava != NULL) {
+        callJava = NULL;
+    }
+    if (playStatus != NULL) {
+        playStatus = NULL;
+    }
+    pthread_mutex_unlock(&initMutex);
+}
+
+TXFFmpeg::~TXFFmpeg() {
+
 }
 

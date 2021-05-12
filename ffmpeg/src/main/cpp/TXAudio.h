@@ -66,6 +66,10 @@ public:
 
     void pause();
 
+    void stop();
+
+    void release();
+
     int getCurrentSimpleRate(int sample_rate);
 };
 

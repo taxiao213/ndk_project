@@ -171,6 +171,8 @@ public class JniSdkImpl {
 
     public native void pause();
 
+    public native void stop();
+
     public native void testPlay(String path);
 
 

@@ -193,6 +193,25 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_pause(JNIEnv *env, jobject thiz) {
         ffmpeg->pause();
     }
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_stop(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        ffmpeg->release();
+        delete (ffmpeg);
+        ffmpeg = NULL;
+    }
+    if (callJava != NULL) {
+        delete (callJava);
+        callJava = NULL;
+    }
+    if (txPlayStatus != NULL) {
+        delete (txPlayStatus);
+        txPlayStatus = NULL;
+    }
+}
+
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"

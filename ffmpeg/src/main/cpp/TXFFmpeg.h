@@ -12,6 +12,7 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/time.h>
 }
 
 class TXFFmpeg {
@@ -22,6 +23,8 @@ public:
     AVFormatContext *pContext = NULL;
     TXAudio *pAudio = NULL;
     TXPlayStatus *playStatus = NULL;
+    pthread_mutex_t initMutex;
+    bool exit = false;
 public:
     TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const char *url);
 
@@ -37,6 +40,8 @@ public:
     void resume();
 
     void pause();
+
+    void release();
 };
 
 

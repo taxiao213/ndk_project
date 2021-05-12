@@ -7,3 +7,7 @@
 TXPlayStatus::TXPlayStatus() {
     this->exit = false;
 }
+
+TXPlayStatus::~TXPlayStatus() {
+
+}

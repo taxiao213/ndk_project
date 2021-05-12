@@ -7,6 +7,6 @@ package com.taxiao.cn.apple;
  * Github:https://github.com/taxiao213
  */
 public class Constant {
-    // audio 网址
-    public static String AUDIO_PATH="http://ting6.yymp3.net:82/new27/chengxiang10/1.mp3";
+    // 播放音乐地址
+    public static String AUDIO_PATH="http://96.ierge.cn/12/185/370503.mp3";
 }

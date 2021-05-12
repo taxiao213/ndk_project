@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private String pcmFilePath;
     private ExecutorService executorService;
     private TextView tv_time_call;
+    private TextView tv_source_change;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,11 +37,14 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_call_main_back = findViewById(R.id.tv_call_main_back);
         TextView tv_call_thread_back = findViewById(R.id.tv_call_thread_back);
         TextView tv_call_ffmpeg_codec = findViewById(R.id.tv_call_ffmpeg_codec);
-        TextView tv_call_ffmpeg_codec_init = findViewById(R.id.tv_call_ffmpeg_codec_init);
         TextView tv_paly_pcm = findViewById(R.id.tv_paly_pcm);
+        TextView tv_play_start = findViewById(R.id.tv_play_start);
         TextView tv_paly_resume = findViewById(R.id.tv_paly_resume);
         TextView tv_paly_pause = findViewById(R.id.tv_paly_pause);
+        TextView tv_time_stop = findViewById(R.id.tv_time_stop);
+        tv_source_change = findViewById(R.id.tv_source_change);
         tv_time_call = findViewById(R.id.tv_time_call);
+
         jniSdk = new JniSdkImpl();
 
         tv_start.setOnClickListener(new View.OnClickListener() {
@@ -92,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        tv_call_ffmpeg_codec_init.setOnClickListener(new View.OnClickListener() {
+        tv_play_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 parpared();
@@ -103,6 +107,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 jniSdk.playPcm(pcmFilePath);
+            }
+        });
+
+        tv_time_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.stop();
+            }
+        });
+
+        tv_source_change.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 切换网络和本地播放地址
+                tv_source_change.setSelected(!tv_source_change.isSelected());
             }
         });
 
@@ -199,7 +218,13 @@ public class MainActivity extends AppCompatActivity {
     public void parpared() {
         // https 的链接端口无法识别
         //       ` jniSdk.callOnLoad(true);`
-        jniSdk.setSource(filePath);
+        String url;
+        if (tv_source_change.isSelected()) {
+            url = Constant.AUDIO_PATH;
+        } else {
+            url = filePath;
+        }
+        jniSdk.setSource(url);
         jniSdk.parpared();
     }
 

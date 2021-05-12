@@ -58,3 +58,7 @@ void TXCallJava::onTimeInfo(int type, int currentTime, int total) {
         javaVm->DetachCurrentThread();
     }
 }
+
+TXCallJava::~TXCallJava() {
+
+}
