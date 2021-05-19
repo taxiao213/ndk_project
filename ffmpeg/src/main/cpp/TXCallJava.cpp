@@ -14,6 +14,7 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodId = jniEnv->GetMethodID(aClass, JAVA_METHOD_PARPARED, "()V");
         jmethodIdCallLoad = jniEnv->GetMethodID(aClass, JAVA_METHOD_LOAD, "(Z)V");
         jmethodIdTimeInfo = jniEnv->GetMethodID(aClass, JAVA_METHOD_TIME_INFO, "(II)V");
+        jmethodIdError = jniEnv->GetMethodID(aClass, JAVA_METHOD_ERROR, "(ILjava/lang/String;)V");
     }
 }
 
@@ -55,6 +56,25 @@ void TXCallJava::onTimeInfo(int type, int currentTime, int total) {
             return;
         }
         env->CallVoidMethod(job, jmethodIdTimeInfo, currentTime, total);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+void TXCallJava::onError(int type, int code, char* errorMsg) {
+    SDK_LOG_D("onError,code %d ,errorMsg %s", code, errorMsg);
+    // 无法回调回去
+    if (type == MAIN_THREAD) {
+        jstring msg = jniEnv->NewStringUTF(errorMsg);
+        jniEnv->CallVoidMethod(job, jmethodIdError, code, msg);
+        jniEnv->DeleteLocalRef(msg);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        jstring msg = env->NewStringUTF(errorMsg);
+        env->CallVoidMethod(job, jmethodIdError, code, msg);
+        env->DeleteLocalRef(msg);
         javaVm->DetachCurrentThread();
     }
 }

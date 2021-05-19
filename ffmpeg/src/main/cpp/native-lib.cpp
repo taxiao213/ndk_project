@@ -25,6 +25,7 @@ pthread_t thread = NULL;
 TXFFmpeg *ffmpeg = NULL;
 TXCallJava *callJava = NULL;
 TXPlayStatus *txPlayStatus = NULL;
+bool isExit = false;
 
 // 创建线程
 void *threadCallBack(void *data) {
@@ -171,7 +172,8 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1parpared(JNIEnv *env, jobject thiz, jstring
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1start(JNIEnv *env, jobject thiz) {
+    if (isExit)return;
     if (ffmpeg != NULL) {
         SDK_LOG_D("start");
         ffmpeg->start();
@@ -180,7 +182,7 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_start(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_taxiao_ffmpeg_JniSdkImpl_resume(JNIEnv *env, jobject thiz) {
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1resume(JNIEnv *env, jobject thiz) {
     if (ffmpeg != NULL) {
         ffmpeg->resume();
     }
@@ -188,7 +190,7 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_resume(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_taxiao_ffmpeg_JniSdkImpl_pause(JNIEnv *env, jobject thiz) {
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1pause(JNIEnv *env, jobject thiz) {
     if (ffmpeg != NULL) {
         ffmpeg->pause();
     }
@@ -196,7 +198,9 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_pause(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_taxiao_ffmpeg_JniSdkImpl_stop(JNIEnv *env, jobject thiz) {
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1stop(JNIEnv *env, jobject thiz) {
+    if (isExit) return;
+    isExit = true;
     if (ffmpeg != NULL) {
         ffmpeg->release();
         delete (ffmpeg);
@@ -210,6 +214,7 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_stop(JNIEnv *env, jobject thiz) {
         delete (txPlayStatus);
         txPlayStatus = NULL;
     }
+    isExit = false;
 }
 
 //------------------------------- OpenSLES pcm -------------------------//

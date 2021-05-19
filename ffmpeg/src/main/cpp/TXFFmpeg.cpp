@@ -3,6 +3,7 @@
 //
 
 #include "TXFFmpeg.h"
+#include "TXError.h"
 
 
 TXFFmpeg::TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const char *url) {
@@ -51,6 +52,9 @@ void TXFFmpeg::decodedFFmpegThread() {
         if (av_strerror(error_code, buf, 1024) == 0) {
             SDK_LOG_D("avformat_open_input error code: %d , str: %s , url: %s", error_code, buf,
                       url);
+            if (callJava != NULL) {
+                callJava->onError(CHILD_THREAD, ERROR_CODE1, ERROR_MSG1);
+            }
         }
         exit = true;
         pthread_mutex_unlock(&initMutex);
@@ -60,6 +64,9 @@ void TXFFmpeg::decodedFFmpegThread() {
         SDK_LOG_D("avformat_find_stream_info error");
         exit = true;
         pthread_mutex_unlock(&initMutex);
+        if (callJava != NULL) {
+            callJava->onError(CHILD_THREAD, ERROR_CODE2, ERROR_MSG2);
+        }
         return;
     }
     SDK_LOG_D("pContext->nb_streams :%d ", pContext->nb_streams);
@@ -83,6 +90,9 @@ void TXFFmpeg::decodedFFmpegThread() {
         SDK_LOG_D("avcodec_find_decoder error");
         exit = true;
         pthread_mutex_unlock(&initMutex);
+        if (callJava != NULL) {
+            callJava->onError(CHILD_THREAD, ERROR_CODE3, ERROR_MSG3);
+        }
         return;
     }
 
@@ -106,6 +116,9 @@ void TXFFmpeg::decodedFFmpegThread() {
         SDK_LOG_D("avcodec_open2 error");
         exit = true;
         pthread_mutex_unlock(&initMutex);
+        if (callJava != NULL) {
+            callJava->onError(CHILD_THREAD, ERROR_CODE4, ERROR_MSG4);
+        }
         return;
     }
     this->callJava->onParpared(CHILD_THREAD);

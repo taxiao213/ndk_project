@@ -1,8 +1,9 @@
 package com.taxiao.ffmpeg;
 
-import android.graphics.ImageFormat;
 import android.text.TextUtils;
+import android.util.Log;
 
+import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
@@ -45,13 +46,13 @@ public class JniSdkImpl {
     private ExecutorService executorService;
     private IFFmpegParparedListener ifFmpegParparedListener;
     private IFFmpegTimeListener ifFmpegTimeListener;
+    private IFFmpegErrorListener ifFmpegErrorListener;
+    private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
 
     public JniSdkImpl() {
         executorService = Executors.newSingleThreadExecutor();
     }
-
-    private MyCallBack myCallBack;
 
     public void setOnCallBack(MyCallBack myCallBack) {
         this.myCallBack = myCallBack;
@@ -63,6 +64,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegTimeListener(IFFmpegTimeListener fFmpegTimeListener) {
         this.ifFmpegTimeListener = fFmpegTimeListener;
+    }
+
+    public void setIFFmpegErrorListener(IFFmpegErrorListener fFmpegErrorListener) {
+        this.ifFmpegErrorListener = fFmpegErrorListener;
     }
 
     public void setSource(String filePath) {
@@ -121,7 +126,7 @@ public class JniSdkImpl {
      * 开始
      */
     public void callOnResume() {
-        resume();
+        n_resume();
         if (ifFmpegParparedListener != null) {
             ifFmpegParparedListener.onResume();
         }
@@ -131,10 +136,24 @@ public class JniSdkImpl {
      * 暂停
      */
     public void callOnPause() {
-        pause();
+        n_pause();
         if (ifFmpegParparedListener != null) {
             ifFmpegParparedListener.onPause();
         }
+    }
+
+    /**
+     * 错误的回调
+     *
+     * @param code
+     * @param name
+     */
+    public void callOnError(int code, String name) {
+        Log.d("sdk callOnError ", "code :" + code + " name: " + name);
+        if (ifFmpegErrorListener != null) {
+            ifFmpegErrorListener.error(code, name);
+        }
+        n_stop();
     }
 
     public interface MyCallBack {
@@ -165,13 +184,13 @@ public class JniSdkImpl {
 
     public native void n_parpared(String path);
 
-    public native void start();
+    public native void n_start();
 
-    public native void resume();
+    public native void n_resume();
 
-    public native void pause();
+    public native void n_pause();
 
-    public native void stop();
+    public native void n_stop();
 
     public native void testPlay(String path);
 

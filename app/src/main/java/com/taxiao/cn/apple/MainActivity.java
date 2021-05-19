@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
+import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
@@ -26,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService executorService;
     private TextView tv_time_call;
     private TextView tv_source_change;
+    private TextView tv_call_error;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView tv = findViewById(R.id.sample_text);
         TextView tv_start = findViewById(R.id.tv_start);
         TextView tv_thread = findViewById(R.id.tv_thread);
         TextView tv_call_main_back = findViewById(R.id.tv_call_main_back);
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_time_stop = findViewById(R.id.tv_time_stop);
         tv_source_change = findViewById(R.id.tv_source_change);
         tv_time_call = findViewById(R.id.tv_time_call);
+        tv_call_error = findViewById(R.id.tv_call_error);
 
         jniSdk = new JniSdkImpl();
 
@@ -113,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         tv_time_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                jniSdk.stop();
+                jniSdk.n_stop();
             }
         });
 
@@ -160,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void parpared() {
                 LogUtils.d("ffmpeg: parpared ");
-                jniSdk.start();
+                jniSdk.n_start();
             }
 
             @Override
@@ -207,6 +209,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        jniSdk.setIFFmpegErrorListener(
+                new IFFmpegErrorListener() {
+                    @Override
+                    public void error(final int code, final String errorMsg) {
+                        LogUtils.d(TAG, "code: " + code + " errorMsg: " + errorMsg);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tv_call_error.setText(String.format("code:%d , errormsg:%s", code, errorMsg));
+                            }
+                        });
+                    }
+                }
+        );
         XXPermissionsUtils.getInstances().hasReadAndWritePermission(new Function<Boolean>() {
             @Override
             public void action(Boolean var) {

@@ -5,6 +5,7 @@
 #include "pthread.h"
 #include "string.h"
 #include "TXAudio.h"
+#include "TXError.h"
 
 #ifndef APPLE_TXFFMPEG_H
 #define APPLE_TXFFMPEG_H

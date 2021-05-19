@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -10,145 +11,173 @@
         android:orientation="vertical"
         tools:context=".MainActivity">
 
-        <TextView
-            android:id="@+id/sample_text"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:text="Hello World!" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_thread"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="创建线程"
-            android:textColor="@android:color/black" />
+            <TextView
+                android:id="@+id/tv_thread"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="0.8"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="创建线程"
+                android:textColor="@android:color/black" />
 
-        <TextView
-            android:id="@+id/tv_start"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="生成者和消费者"
-            android:textColor="@android:color/black" />
+            <TextView
+                android:id="@+id/tv_start"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="生成者和消费者"
+                android:textColor="@android:color/black" />
 
 
-        <TextView
-            android:id="@+id/tv_call_main_back"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="c++主线程调用java"
-            android:textColor="@android:color/black" />
+            <TextView
+                android:id="@+id/tv_call_main_back"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="c++主线程调用java"
+                android:textColor="@android:color/black" />
 
-        <TextView
-            android:id="@+id/tv_call_thread_back"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="c++子线程调用java"
-            android:textColor="@android:color/black" />
+            <TextView
+                android:id="@+id/tv_call_thread_back"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="c++子线程调用java"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
 
         <TextView
             android:id="@+id/tv_call_ffmpeg_codec"
             android:layout_width="180dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:background="@android:color/darker_gray"
             android:gravity="center"
             android:text="ffmpeg test codec"
             android:textColor="@android:color/black" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_paly_pcm"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="play pcm"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_play_start"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="play start"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_paly_resume"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="play resume"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_paly_pause"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="play pause"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_time_stop"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="play stop"
+                android:textColor="@android:color/black" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_time_call"
+                android:layout_width="180dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_source_change"
+                android:layout_width="180dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="audio source change"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tv_paly_pcm"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
+            android:id="@+id/tv_call_error"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
             android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="play pcm"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_play_start"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="play start"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_paly_resume"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="play resume"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_paly_pause"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="play pause"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_time_stop"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="play stop"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_time_call"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
             android:textColor="@android:color/black" />
-
-        <TextView
-            android:id="@+id/tv_source_change"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray"
-            android:gravity="center"
-            android:text="audio source change"
-            android:textColor="@android:color/black" />
-
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
