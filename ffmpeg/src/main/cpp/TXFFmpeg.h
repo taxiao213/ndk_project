@@ -26,6 +26,9 @@ public:
     TXPlayStatus *playStatus = NULL;
     pthread_mutex_t initMutex;
     bool exit = false;
+    int duration = 0;
+    pthread_mutex_t seek_mutex;
+
 public:
     TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const char *url);
 
@@ -43,6 +46,10 @@ public:
     void pause();
 
     void release();
+
+    void setVolume(int percent);
+
+    void setSeek(int64_t seconds);
 };
 
 

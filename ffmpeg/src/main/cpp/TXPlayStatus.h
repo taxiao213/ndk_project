@@ -10,6 +10,7 @@ class TXPlayStatus {
 public :
     bool exit;
     bool load;
+    bool seek;
 public :
     TXPlayStatus();
 

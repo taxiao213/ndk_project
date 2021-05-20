@@ -139,6 +139,9 @@ int TXAudio::resampleAudio() {
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
     TXAudio *txAudio = (TXAudio *) context;
     if (txAudio != NULL) {
+        if (txAudio->playStatus->exit) {
+            return;
+        }
         int bufferSize = txAudio->resampleAudio();
         if (bufferSize > 0) {
             SDK_LOG_D("bqPlayerCallback %d ", bufferSize);
@@ -296,9 +299,15 @@ void TXAudio::initOpenSLES() {
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
 
+    // get volume
+    result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_VOLUME, &pcmPlayVolume);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+
     // get the buffer queue interface
     result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_BUFFERQUEUE,
                                             &bqPlayerBufferQueue);
+    setVolume(volumePercent);
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
     SDK_LOG_D("get the buffer");
@@ -380,6 +389,32 @@ void TXAudio::release() {
         txCallJava = NULL;
     }
 
+}
+
+// 0是最大值 -5000是最小值
+void TXAudio::setVolume(int percent) {
+    volumePercent = percent;
+    if (pcmPlayVolume != NULL) {
+        if (percent > 30) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -20);
+        } else if (percent > 25) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -22);
+        } else if (percent > 20) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -25);
+        } else if (percent > 15) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -28);
+        } else if (percent > 10) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -30);
+        } else if (percent > 5) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -34);
+        } else if (percent > 3) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -37);
+        } else if (percent > 0) {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -40);
+        } else {
+            (*pcmPlayVolume)->SetVolumeLevel(pcmPlayVolume, (100 - percent) * -100);
+        }
+    }
 }
 
 TXAudio::~TXAudio() {

@@ -26,6 +26,7 @@ TXFFmpeg *ffmpeg = NULL;
 TXCallJava *callJava = NULL;
 TXPlayStatus *txPlayStatus = NULL;
 bool isExit = false;
+pthread_t thread_start;
 
 // 创建线程
 void *threadCallBack(void *data) {
@@ -38,7 +39,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_startThread(JNIEnv *env, jobject thiz) {
 //    pthread_create(&thread, nullptr, threadCallBack, NULL);
-    ThreadTest *threadTest = new ThreadTest(&thread, "的多大");
+    ThreadTest *threadTest = new ThreadTest(&thread, "测试");
 }
 
 // 生产者 消费者
@@ -47,6 +48,8 @@ pthread_t custom;
 pthread_mutex_t mutex;
 pthread_cond_t cond;
 std::queue<int> queue;
+JavaVM *jvm;
+JavaListener *javaListener;
 
 void *produceCallBack(void *data) {
     while (1) {
@@ -89,10 +92,6 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_mutexThread(JNIEnv *env, jobject thiz) {
     pthread_create(&produce, nullptr, produceCallBack, nullptr);
     pthread_create(&custom, nullptr, customCallBack, nullptr);
 }
-
-
-JavaVM *jvm;
-JavaListener *javaListener;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -170,13 +169,21 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1parpared(JNIEnv *env, jobject thiz, jstring
     env->ReleaseStringUTFChars(path, url);
 }
 
+void *ffmpegStart(void *data) {
+    SDK_LOG_D("ffmpegStart");
+    TXFFmpeg *txfFmpeg = (TXFFmpeg *) data;
+    if (txfFmpeg != NULL) {
+        txfFmpeg->start();
+    }
+    pthread_exit(&thread_start);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_n_1start(JNIEnv *env, jobject thiz) {
     if (isExit)return;
     if (ffmpeg != NULL) {
-        SDK_LOG_D("start");
-        ffmpeg->start();
+        pthread_create(&thread_start, NULL, ffmpegStart, ffmpeg);
     }
 }
 
@@ -215,6 +222,22 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1stop(JNIEnv *env, jobject thiz) {
         txPlayStatus = NULL;
     }
     isExit = false;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1seek(JNIEnv *env, jobject thiz, jint seconds) {
+    if (ffmpeg != NULL) {
+        ffmpeg->setSeek(seconds);
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1volume(JNIEnv *env, jobject thiz, jint percent) {
+    if (ffmpeg != NULL) {
+        ffmpeg->setVolume(percent);
+    }
 }
 
 //------------------------------- OpenSLES pcm -------------------------//

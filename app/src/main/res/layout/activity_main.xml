@@ -179,6 +179,17 @@
             android:gravity="center"
             android:textColor="@android:color/black" />
 
+        <SeekBar
+            android:id="@+id/seekbar_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_volume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
 

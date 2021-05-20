@@ -43,7 +43,9 @@ public:
     SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
     SLObjectItf pcmPlayObject = NULL;
     SLPlayItf bqPlayerPlay = NULL;
+    SLVolumeItf pcmPlayVolume = NULL;
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue = NULL;
+    int volumePercent = 100;
 
     // duration
     int duration = 0; // 总时间
@@ -71,6 +73,9 @@ public:
     void release();
 
     int getCurrentSimpleRate(int sample_rate);
+
+    void setVolume(int percent);
+
 };
 
 

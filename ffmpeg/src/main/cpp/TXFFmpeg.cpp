@@ -11,6 +11,7 @@ TXFFmpeg::TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const cha
     this->url = url;
     this->playStatus = txPlayStatus;
     pthread_mutex_init(&initMutex, NULL);
+    pthread_mutex_init(&seek_mutex, NULL);
 }
 
 void *decodeFFmpeg(void *data) {
@@ -80,6 +81,7 @@ void TXFFmpeg::decodedFFmpegThread() {
                 pAudio->codecpar = pContext->streams[i]->codecpar;
                 pAudio->duration = pContext->duration / AV_TIME_BASE;
                 pAudio->avRational = pContext->streams[i]->time_base;
+                duration = pAudio->duration;
             }
             SDK_LOG_D("pAudio != NULL ");
         }
@@ -133,6 +135,14 @@ void TXFFmpeg::start() {
     int count = 0;
     pAudio->play();
     while (playStatus != NULL && !playStatus->exit) {
+
+        if (playStatus->seek) {
+            continue;
+        }
+
+        if (pAudio->queue->getQueueSize() > 40) {
+            continue;
+        }
         AVPacket *pPacket = av_packet_alloc();
         int readFrame = av_read_frame(pContext, pPacket);
         if (readFrame == 0) {
@@ -167,13 +177,9 @@ void TXFFmpeg::start() {
         }
     }
     exit = true;
-//    while (pAudio->queue->getQueueSize() > 0) {
-//        AVPacket *pPacket = av_packet_alloc();
-//        pAudio->queue->getAvpacket(pPacket);
-//        av_packet_free(&pPacket);
-//        av_free(pPacket);
-//        pPacket = NULL;
-//    }
+    if (callJava != NULL) {
+        callJava->onCallComplete(CHILD_THREAD);
+    }
     SDK_LOG_D("解码完成");
 }
 
@@ -190,9 +196,6 @@ void TXFFmpeg::pause() {
 }
 
 void TXFFmpeg::release() {
-    if (playStatus->exit) {
-        return;
-    }
     playStatus->exit = true;
     pthread_mutex_lock(&initMutex);
     int sleepCount = 0;
@@ -223,7 +226,36 @@ void TXFFmpeg::release() {
     pthread_mutex_unlock(&initMutex);
 }
 
-TXFFmpeg::~TXFFmpeg() {
-
+void TXFFmpeg::setVolume(int percent) {
+    if (pAudio != NULL) {
+        pAudio->setVolume(percent);
+    }
 }
+
+void TXFFmpeg::setSeek(int64_t seconds) {
+    if (duration < 0) {
+        SDK_LOG_D("duration %d", duration);
+        return;
+    }
+    if (seconds >= 0 && seconds <= duration) {
+        if (pAudio != NULL) {
+            playStatus->seek = true;
+            pAudio->queue->clearAvpacket();
+            pAudio->clock = 0;
+            pAudio->last_time = 0;
+            pthread_mutex_lock(&seek_mutex);
+            int64_t rel = seconds * duration / 100 * AV_TIME_BASE;
+            avformat_seek_file(pContext, -1, INT64_MIN, rel, INT64_MAX, 0);
+            pthread_mutex_unlock(&seek_mutex);
+            playStatus->seek = false;
+        }
+    }
+}
+
+TXFFmpeg::~TXFFmpeg() {
+    pthread_mutex_destroy(&initMutex);
+    pthread_mutex_destroy(&seek_mutex);
+}
+
+
 

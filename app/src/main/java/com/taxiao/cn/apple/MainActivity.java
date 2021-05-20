@@ -2,12 +2,14 @@ package com.taxiao.cn.apple;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
+import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
@@ -28,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_time_call;
     private TextView tv_source_change;
     private TextView tv_call_error;
+    private int seekProgress;
+    private int volumeProgress = 50;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
         tv_source_change = findViewById(R.id.tv_source_change);
         tv_time_call = findViewById(R.id.tv_time_call);
         tv_call_error = findViewById(R.id.tv_call_error);
+        SeekBar seekbar_volume = findViewById(R.id.seekbar_volume);
+        SeekBar seekbar_time = findViewById(R.id.seekbar_time);
+        seekbar_volume.setProgress(volumeProgress);
 
         jniSdk = new JniSdkImpl();
 
@@ -127,6 +134,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        seekbar_time.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                LogUtils.d(TAG, "seekbar_time process : " + progress);
+                seekProgress = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                jniSdk.n_seek(seekProgress);
+            }
+        });
+
+        seekbar_volume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                LogUtils.d(TAG, "seekbar_volume process : " + progress);
+                volumeProgress = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                jniSdk.n_volume(volumeProgress);
+            }
+        });
+
+
         jniSdk.setOnCallBack(new JniSdkImpl.MyCallBack() {
             @Override
             public void error(int code, String name) {
@@ -162,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void parpared() {
                 LogUtils.d("ffmpeg: parpared ");
+                jniSdk.setVolume(volumeProgress);
                 jniSdk.n_start();
             }
 
@@ -223,6 +268,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        jniSdk.setIFFmpegCompleteListener(new IFFmpegCompleteListener() {
+            @Override
+            public void complete() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv_time_call.setText("播放完成");
+                    }
+                });
+            }
+        });
+
         XXPermissionsUtils.getInstances().hasReadAndWritePermission(new Function<Boolean>() {
             @Override
             public void action(Boolean var) {

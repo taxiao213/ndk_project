@@ -11,6 +11,7 @@
 #define JAVA_METHOD_LOAD "callOnLoad"
 #define JAVA_METHOD_TIME_INFO "callTimeInfo"
 #define JAVA_METHOD_ERROR "callOnError"
+#define JAVA_METHOD_COMPLETE "callOnComplete"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -23,6 +24,7 @@ public:
     jmethodID jmethodIdCallLoad;
     jmethodID jmethodIdTimeInfo;
     jmethodID jmethodIdError;
+    jmethodID jmethodIdComplete;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -36,6 +38,8 @@ public:
     void onTimeInfo(int type, int currentTime, int total);
 
     void onError(int type, int code, char* errorMsg);
+
+    void onCallComplete(int type);
 };
 
 

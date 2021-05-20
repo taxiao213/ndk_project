@@ -15,6 +15,7 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodIdCallLoad = jniEnv->GetMethodID(aClass, JAVA_METHOD_LOAD, "(Z)V");
         jmethodIdTimeInfo = jniEnv->GetMethodID(aClass, JAVA_METHOD_TIME_INFO, "(II)V");
         jmethodIdError = jniEnv->GetMethodID(aClass, JAVA_METHOD_ERROR, "(ILjava/lang/String;)V");
+        jmethodIdComplete = jniEnv->GetMethodID(aClass, JAVA_METHOD_COMPLETE, "()V");
     }
 }
 
@@ -41,7 +42,8 @@ void TXCallJava::onLoad(int type, bool isLoad) {
         if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
             return;
         }
-        env->CallBooleanMethod(job, jmethodIdCallLoad, isLoad);
+        //TODO seek 时 javaVm->DetachCurrentThread() 会导致崩溃
+//        env->CallBooleanMethod(job, jmethodIdCallLoad, isLoad);
         javaVm->DetachCurrentThread();
     }
 }
@@ -60,7 +62,7 @@ void TXCallJava::onTimeInfo(int type, int currentTime, int total) {
     }
 }
 
-void TXCallJava::onError(int type, int code, char* errorMsg) {
+void TXCallJava::onError(int type, int code, char *errorMsg) {
     SDK_LOG_D("onError,code %d ,errorMsg %s", code, errorMsg);
     // 无法回调回去
     if (type == MAIN_THREAD) {
@@ -79,6 +81,23 @@ void TXCallJava::onError(int type, int code, char* errorMsg) {
     }
 }
 
+void TXCallJava::onCallComplete(int type) {
+    SDK_LOG_D("onCallComplete");
+    // 无法回调回去
+    if (type == MAIN_THREAD) {
+        jniEnv->CallVoidMethod(job, jmethodIdComplete);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        env->CallVoidMethod(job, jmethodIdComplete);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+
 TXCallJava::~TXCallJava() {
 
 }
+

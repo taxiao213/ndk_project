@@ -3,6 +3,7 @@ package com.taxiao.ffmpeg;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
@@ -44,11 +45,13 @@ public class JniSdkImpl {
 
     private String filePath;
     private ExecutorService executorService;
-    private IFFmpegParparedListener ifFmpegParparedListener;
-    private IFFmpegTimeListener ifFmpegTimeListener;
-    private IFFmpegErrorListener ifFmpegErrorListener;
+    private IFFmpegParparedListener iffmpegparparedlistener;
+    private IFFmpegTimeListener iffmpegtimelistener;
+    private IFFmpegErrorListener iffmpegerrorlistener;
+    private IFFmpegCompleteListener iffmpegcompletelistener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
+    private static int volumePercent = 100;
 
     public JniSdkImpl() {
         executorService = Executors.newSingleThreadExecutor();
@@ -59,15 +62,19 @@ public class JniSdkImpl {
     }
 
     public void setIFFmpegParparedListener(IFFmpegParparedListener fmpegParparedListener) {
-        this.ifFmpegParparedListener = fmpegParparedListener;
+        this.iffmpegparparedlistener = fmpegParparedListener;
     }
 
     public void setIFFmpegTimeListener(IFFmpegTimeListener fFmpegTimeListener) {
-        this.ifFmpegTimeListener = fFmpegTimeListener;
+        this.iffmpegtimelistener = fFmpegTimeListener;
     }
 
     public void setIFFmpegErrorListener(IFFmpegErrorListener fFmpegErrorListener) {
-        this.ifFmpegErrorListener = fFmpegErrorListener;
+        this.iffmpegerrorlistener = fFmpegErrorListener;
+    }
+
+    public void setIFFmpegCompleteListener(IFFmpegCompleteListener fFmpegCompleteListener) {
+        this.iffmpegcompletelistener = fFmpegCompleteListener;
     }
 
     public void setSource(String filePath) {
@@ -85,6 +92,18 @@ public class JniSdkImpl {
         }
     }
 
+    public void setVolume(int percent) {
+        if (percent >= 0 && percent <= 100) {
+            volumePercent = percent;
+            n_volume(percent);
+        }
+    }
+
+    public int getVolumePercent()
+    {
+        return volumePercent;
+    }
+
     // -------------------------   c++ 回调函数 --------------------------------------
 
     /**
@@ -94,13 +113,13 @@ public class JniSdkImpl {
      * @param totalTime
      */
     public void callTimeInfo(int currentTime, int totalTime) {
-        if (ifFmpegTimeListener != null) {
+        if (iffmpegtimelistener != null) {
             if (timeInfoModel == null) {
                 timeInfoModel = new TimeInfoModel();
             }
             timeInfoModel.setCurrentTime(currentTime);
             timeInfoModel.setTotalTime(totalTime);
-            ifFmpegTimeListener.onTimeInfo(timeInfoModel);
+            iffmpegtimelistener.onTimeInfo(timeInfoModel);
         }
     }
 
@@ -108,8 +127,8 @@ public class JniSdkImpl {
      * c++ 准备就绪回调
      */
     public void callParpared() {
-        if (ifFmpegParparedListener != null) {
-            ifFmpegParparedListener.parpared();
+        if (iffmpegparparedlistener != null) {
+            iffmpegparparedlistener.parpared();
         }
     }
 
@@ -117,8 +136,8 @@ public class JniSdkImpl {
      * c++
      */
     public void callOnLoad(boolean isLoad) {
-        if (ifFmpegParparedListener != null) {
-            ifFmpegParparedListener.onLoad(isLoad);
+        if (iffmpegparparedlistener != null) {
+            iffmpegparparedlistener.onLoad(isLoad);
         }
     }
 
@@ -127,8 +146,8 @@ public class JniSdkImpl {
      */
     public void callOnResume() {
         n_resume();
-        if (ifFmpegParparedListener != null) {
-            ifFmpegParparedListener.onResume();
+        if (iffmpegparparedlistener != null) {
+            iffmpegparparedlistener.onResume();
         }
     }
 
@@ -137,8 +156,8 @@ public class JniSdkImpl {
      */
     public void callOnPause() {
         n_pause();
-        if (ifFmpegParparedListener != null) {
-            ifFmpegParparedListener.onPause();
+        if (iffmpegparparedlistener != null) {
+            iffmpegparparedlistener.onPause();
         }
     }
 
@@ -150,8 +169,18 @@ public class JniSdkImpl {
      */
     public void callOnError(int code, String name) {
         Log.d("sdk callOnError ", "code :" + code + " name: " + name);
-        if (ifFmpegErrorListener != null) {
-            ifFmpegErrorListener.error(code, name);
+        if (iffmpegerrorlistener != null) {
+            iffmpegerrorlistener.error(code, name);
+        }
+        n_stop();
+    }
+
+    /**
+     * 播放完成的回调
+     */
+    public void callOnComplete() {
+        if (iffmpegcompletelistener != null) {
+            iffmpegcompletelistener.complete();
         }
         n_stop();
     }
@@ -191,6 +220,12 @@ public class JniSdkImpl {
     public native void n_pause();
 
     public native void n_stop();
+
+    // seek
+    public native void n_seek(int seconds);
+
+    // 音量
+    public native void n_volume(int percent);
 
     public native void testPlay(String path);
 
