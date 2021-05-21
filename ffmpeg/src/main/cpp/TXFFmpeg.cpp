@@ -263,5 +263,17 @@ void TXFFmpeg::setMute(int channel) {
     }
 }
 
+void TXFFmpeg::setPitch(float pitch) {
+    if (pAudio != NULL) {
+        pAudio->setPitch(pitch);
+    }
+}
+
+void TXFFmpeg::setSpeed(float speed) {
+    if (pAudio != NULL) {
+        pAudio->setSpeed(speed);
+    }
+}
+
 
 

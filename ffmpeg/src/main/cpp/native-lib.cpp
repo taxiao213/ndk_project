@@ -250,6 +250,23 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1mute(JNIEnv *env, jobject thiz, jint channe
 
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1pitch(JNIEnv *env, jobject thiz, jfloat pitch) {
+    if (ffmpeg != NULL) {
+        ffmpeg->setPitch(pitch);
+    }
+
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1speed(JNIEnv *env, jobject thiz, jfloat speed) {
+    if (ffmpeg != NULL) {
+        ffmpeg->setSpeed(speed);
+    }
+}
+
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"

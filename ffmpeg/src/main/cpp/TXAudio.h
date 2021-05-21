@@ -15,6 +15,10 @@ extern "C" {
 #include <libavutil/rational.h>
 }
 
+#include "soundtouch/source/SoundTouch.h"
+
+using namespace soundtouch;
+
 #ifndef APPLE_TXAUDIO_H
 #define APPLE_TXAUDIO_H
 
@@ -51,12 +55,23 @@ public:
     SLMuteSoloItf fdPlayerMuteSolo = NULL; // 声道
     int volumePercent = 100;
     int muteChannel = CHANNEL_LEFT;
+    int pitchPercent  = 1.0;
+    int speedPercent = 1.0;
+
     // duration
     int duration = 0; // 总时间
     AVRational avRational; // 总时间/总帧数
     double now_time = 0.0; // 现在时间
     double clock = 0.0; // 当前时间
     double last_time = 0.0;
+
+    // soundtouch
+    SoundTouch *soundTouch = NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
+    uint8_t *out_buffer = NULL;
+    bool finish = true;
+    int nb = 0;
+    int num = 0;
 public:
     TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 
@@ -64,7 +79,7 @@ public:
 
     void play();
 
-    int resampleAudio();
+    int resampleAudio(void **buffer);
 
     void initOpenSLES();
 
@@ -81,6 +96,12 @@ public:
     void setVolume(int percent);
 
     void setMute(int channel);
+
+    int getSoundTouchData();
+
+    void setPitch(float pitch);
+
+    void setSpeed(float speed);
 
 };
 

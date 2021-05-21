@@ -83,7 +83,6 @@ void TXCallJava::onError(int type, int code, char *errorMsg) {
 
 void TXCallJava::onCallComplete(int type) {
     SDK_LOG_D("onCallComplete");
-    // 无法回调回去
     if (type == MAIN_THREAD) {
         jniEnv->CallVoidMethod(job, jmethodIdComplete);
     } else if (type == CHILD_THREAD) {

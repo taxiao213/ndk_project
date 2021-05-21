@@ -50,10 +50,13 @@ set_target_properties(${swresample} PROPERTIES IMPORTED_LOCATION ${rootPath}/${s
 add_library(${swscale} SHARED IMPORTED)
 set_target_properties(${swscale} PROPERTIES IMPORTED_LOCATION ${rootPath}/${swscale})
 
+include_directories(soundtouch/source)
+aux_source_directory(soundtouch/source DIR_SRCS)
+
 add_library(
         native-lib
         SHARED
-
+        ${DIR_SRCS}
         native-lib.cpp
         javaListener.cpp
         TXCallJava.cpp

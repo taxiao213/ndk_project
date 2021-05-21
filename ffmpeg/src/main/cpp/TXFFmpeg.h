@@ -52,6 +52,10 @@ public:
     void setSeek(int64_t seconds);
 
     void setMute(int channel);
+
+    void setPitch(float pitch);
+
+    void setSpeed(float speed);
 };
 
 

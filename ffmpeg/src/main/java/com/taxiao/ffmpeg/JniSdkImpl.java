@@ -107,6 +107,13 @@ public class JniSdkImpl {
         return volumePercent;
     }
 
+    public void setPitch(float pitch) {
+        n_pitch(pitch);
+    }
+
+    public void setSpeed(float speed) {
+        n_speed(speed);
+    }
     // -------------------------   c++ 回调函数 --------------------------------------
 
     /**
@@ -234,5 +241,11 @@ public class JniSdkImpl {
 
     // 设置声道
     public native void n_mute(int channel);
+
+    // 设置变调
+    private native void n_pitch(float pitch);
+
+    // 设置变速
+    private native void n_speed(float speed);
 
 }

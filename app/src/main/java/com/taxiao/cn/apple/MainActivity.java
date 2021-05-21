@@ -23,17 +23,22 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.this.getClass().getSimpleName();
-    private JniSdkImpl jniSdk;
-
-    private String filePath;
-    private String pcmFilePath;
-    private ExecutorService executorService;
     private TextView tv_time_call;
     private TextView tv_source_change;
     private TextView tv_call_error;
+    private TextView tv_pitch;
+    private TextView tv_speed;
+    private TextView tv_valume;
+
+    private JniSdkImpl jniSdk;
+    private ExecutorService executorService;
+    private String filePath;
+    private String pcmFilePath;
     private int seekProgress;
-    private int volumeProgress = 50;
-    private int channel_mute = TXConstant.CHANNEL_LEFT;
+    private int volumeProgress;
+    private int channel_mute = TXConstant.CHANNEL_STEREO;
+    private float pitchProgress = Constant.INIT_PITCH_COEFFICIENT;
+    private float speedProgress = Constant.INIT_SPEED_COEFFICIENT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,10 +59,22 @@ public class MainActivity extends AppCompatActivity {
         tv_call_error = findViewById(R.id.tv_call_error);
         SeekBar seekbar_volume = findViewById(R.id.seekbar_volume);
         SeekBar seekbar_time = findViewById(R.id.seekbar_time);
-        seekbar_volume.setProgress(volumeProgress);
+
         TextView tv_stereo = findViewById(R.id.tv_stereo);
         TextView tv_left_channel = findViewById(R.id.tv_left_channel);
         TextView tv_right_channel = findViewById(R.id.tv_right_channel);
+        SeekBar seekbar_pitch = findViewById(R.id.seekbar_pitch);// 变调
+        SeekBar seekbar_speed = findViewById(R.id.seekbar_speed);// 变速
+        tv_pitch = findViewById(R.id.tv_pitch);
+        tv_speed = findViewById(R.id.tv_speed);
+        tv_valume = findViewById(R.id.tv_valume);
+
+        seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
+        seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
+        seekbar_volume.setProgress(Constant.VOLUME_PROGRESS);
+        tv_valume.setText(getString(R.string.audio_valume, String.valueOf(volumeProgress)));
+        tv_pitch.setText(getString(R.string.audio_pitch, String.valueOf(pitchProgress)));
+        tv_speed.setText(getString(R.string.audio_speed, String.valueOf(speedProgress)));
 
         jniSdk = new JniSdkImpl();
 
@@ -183,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 LogUtils.d(TAG, "seekbar_volume process : " + progress);
                 volumeProgress = progress;
+                tv_valume.setText(getString(R.string.audio_valume, String.valueOf(volumeProgress)));
             }
 
             @Override
@@ -196,6 +214,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        seekbar_pitch.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                LogUtils.d(TAG, "seekbar_time process : " + progress);
+                pitchProgress = progress / Constant.PITCH_COEFFICIENT;
+                tv_pitch.setText(getString(R.string.audio_pitch, String.valueOf(pitchProgress)));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                jniSdk.setPitch(pitchProgress);
+            }
+        });
+
+        seekbar_speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                LogUtils.d(TAG, "seekbar_time process : " + progress);
+                speedProgress = progress / Constant.SPEED_COEFFICIENT;
+                tv_speed.setText(getString(R.string.audio_speed, String.valueOf(speedProgress)));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                jniSdk.setSpeed(speedProgress);
+            }
+        });
 
         jniSdk.setOnCallBack(new JniSdkImpl.MyCallBack() {
             @Override
@@ -234,6 +289,8 @@ public class MainActivity extends AppCompatActivity {
                 LogUtils.d("ffmpeg: parpared ");
                 jniSdk.setVolume(volumeProgress);
                 jniSdk.setMute(channel_mute);
+                jniSdk.setPitch(pitchProgress);
+                jniSdk.setSpeed(speedProgress);
                 jniSdk.n_start();
             }
 

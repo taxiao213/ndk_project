@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Apple</string>
+    <string name="audio_pitch">变调:%s</string>
+    <string name="audio_speed">变速:%s</string>
+    <string name="audio_valume">音量:%s</string>
 </resources>
