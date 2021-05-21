@@ -50,6 +50,8 @@ public:
     void setVolume(int percent);
 
     void setSeek(int64_t seconds);
+
+    void setMute(int channel);
 };
 
 

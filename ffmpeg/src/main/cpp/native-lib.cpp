@@ -240,6 +240,16 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1volume(JNIEnv *env, jobject thiz, jint perc
     }
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1mute(JNIEnv *env, jobject thiz, jint channel) {
+    // 设置声道
+    if (ffmpeg != NULL) {
+        ffmpeg->setMute(channel);
+    }
+
+}
+
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"

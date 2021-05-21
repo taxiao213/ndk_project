@@ -13,6 +13,10 @@ TXAudio::TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_
     buffer = (uint8_t *) (av_malloc(sample_rate * 2 * 2));
 }
 
+TXAudio::~TXAudio() {
+
+}
+
 // 重采样
 void *decodePlay(void *data) {
     SDK_LOG_D("decodePlay");
@@ -277,14 +281,16 @@ void TXAudio::initOpenSLES() {
     * fast audio does not support when SL_IID_EFFECTSEND is required, skip it
     * for fast audio case
     */
-    const SLInterfaceID audio_ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME};
-    const SLboolean audio_req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID audio_ids[4] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME,
+                                        SL_IID_MUTESOLO};
+    const SLboolean audio_req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
+                                    SL_BOOLEAN_TRUE};
 //    const SLInterfaceID audio_ids[1] = {SL_IID_BUFFERQUEUE};
 //    const SLboolean audio_req[1] = {SL_BOOLEAN_TRUE};
 
     // create audio player:
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayObject, &slDataSource,
-                                                &audioSnk, 3, audio_ids, audio_req);
+                                                &audioSnk, 4, audio_ids, audio_req);
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
 
@@ -304,13 +310,20 @@ void TXAudio::initOpenSLES() {
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
 
+    // get the mute/solo interface
+    result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_MUTESOLO, &fdPlayerMuteSolo);
+    assert(SL_RESULT_SUCCESS == result);
+    (void) result;
+
     // get the buffer queue interface
     result = (*pcmPlayObject)->GetInterface(pcmPlayObject, SL_IID_BUFFERQUEUE,
                                             &bqPlayerBufferQueue);
-    setVolume(volumePercent);
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
     SDK_LOG_D("get the buffer");
+
+    setVolume(volumePercent);
+    setMute(muteChannel);
 
     // 设置回调函数
     result = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, this);
@@ -373,6 +386,12 @@ void TXAudio::release() {
         (*engineObject)->Destroy(engineObject);
         engineObject = NULL;
     }
+    if (pcmPlayVolume != NULL) {
+        pcmPlayVolume = NULL;
+    }
+    if (fdPlayerMuteSolo != NULL) {
+        fdPlayerMuteSolo = NULL;
+    }
     if (buffer != NULL) {
         free(buffer);
         buffer = NULL;
@@ -417,6 +436,19 @@ void TXAudio::setVolume(int percent) {
     }
 }
 
-TXAudio::~TXAudio() {
-
+// 设置声道 0右声道 1左声道 2立体声
+void TXAudio::setMute(int channel) {
+    muteChannel = channel;
+    if (fdPlayerMuteSolo != NULL) {
+        if (channel == 0) {
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_LEFT, false);
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_RIGHT, true);
+        } else if (channel == 1) {
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_LEFT, true);
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_RIGHT, false);
+        } else if (channel == 2) {
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_LEFT, false);
+            (*fdPlayerMuteSolo)->SetChannelMute(fdPlayerMuteSolo, CHANNEL_RIGHT, false);
+        }
+    }
 }

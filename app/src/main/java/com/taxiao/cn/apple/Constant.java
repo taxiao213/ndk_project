@@ -8,5 +8,6 @@ package com.taxiao.cn.apple;
  */
 public class Constant {
     // 播放音乐地址
-    public static String AUDIO_PATH="http://96.ierge.cn/12/185/370503.mp3";
+    public static String AUDIO_PATH = "http://96.ierge.cn/12/185/370503.mp3";
+
 }

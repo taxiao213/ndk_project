@@ -18,6 +18,9 @@ extern "C" {
 #ifndef APPLE_TXAUDIO_H
 #define APPLE_TXAUDIO_H
 
+#define CHANNEL_RIGHT 0
+#define CHANNEL_LEFT 1
+
 class TXAudio {
 public:
     int streamIndex = -1;
@@ -43,10 +46,11 @@ public:
     SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
     SLObjectItf pcmPlayObject = NULL;
     SLPlayItf bqPlayerPlay = NULL;
-    SLVolumeItf pcmPlayVolume = NULL;
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue = NULL;
+    SLVolumeItf pcmPlayVolume = NULL;
+    SLMuteSoloItf fdPlayerMuteSolo = NULL; // 声道
     int volumePercent = 100;
-
+    int muteChannel = CHANNEL_LEFT;
     // duration
     int duration = 0; // 总时间
     AVRational avRational; // 总时间/总帧数
@@ -75,6 +79,8 @@ public:
     int getCurrentSimpleRate(int sample_rate);
 
     void setVolume(int percent);
+
+    void setMute(int channel);
 
 };
 

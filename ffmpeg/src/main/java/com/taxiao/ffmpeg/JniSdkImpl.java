@@ -99,8 +99,11 @@ public class JniSdkImpl {
         }
     }
 
-    public int getVolumePercent()
-    {
+    public void setMute(int channel) {
+        n_mute(channel);
+    }
+
+    public int getVolumePercent() {
         return volumePercent;
     }
 
@@ -229,5 +232,7 @@ public class JniSdkImpl {
 
     public native void testPlay(String path);
 
+    // 设置声道
+    public native void n_mute(int channel);
 
 }

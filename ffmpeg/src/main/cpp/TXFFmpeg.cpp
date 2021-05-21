@@ -14,6 +14,11 @@ TXFFmpeg::TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const cha
     pthread_mutex_init(&seek_mutex, NULL);
 }
 
+TXFFmpeg::~TXFFmpeg() {
+    pthread_mutex_destroy(&initMutex);
+    pthread_mutex_destroy(&seek_mutex);
+}
+
 void *decodeFFmpeg(void *data) {
     TXFFmpeg *txfFmpeg = (TXFFmpeg *) (data);
     txfFmpeg->decodedFFmpegThread();
@@ -252,9 +257,10 @@ void TXFFmpeg::setSeek(int64_t seconds) {
     }
 }
 
-TXFFmpeg::~TXFFmpeg() {
-    pthread_mutex_destroy(&initMutex);
-    pthread_mutex_destroy(&seek_mutex);
+void TXFFmpeg::setMute(int channel) {
+    if (pAudio != NULL) {
+        pAudio->setMute(channel);
+    }
 }
 
 

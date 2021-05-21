@@ -13,6 +13,7 @@ import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
+import com.taxiao.ffmpeg.utils.TXConstant;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
 import com.taxiao.ffmpeg.utils.XXPermissionsUtils;
 
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_call_error;
     private int seekProgress;
     private int volumeProgress = 50;
+    private int channel_mute = TXConstant.CHANNEL_LEFT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
         SeekBar seekbar_volume = findViewById(R.id.seekbar_volume);
         SeekBar seekbar_time = findViewById(R.id.seekbar_time);
         seekbar_volume.setProgress(volumeProgress);
+        TextView tv_stereo = findViewById(R.id.tv_stereo);
+        TextView tv_left_channel = findViewById(R.id.tv_left_channel);
+        TextView tv_right_channel = findViewById(R.id.tv_right_channel);
 
         jniSdk = new JniSdkImpl();
 
@@ -123,6 +128,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 jniSdk.n_stop();
+            }
+        });
+
+        tv_stereo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.n_mute(TXConstant.CHANNEL_STEREO);
+            }
+        });
+
+        tv_left_channel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.n_mute(TXConstant.CHANNEL_LEFT);
+            }
+        });
+
+        tv_right_channel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.n_mute(TXConstant.CHANNEL_RIGHT);
             }
         });
 
@@ -207,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
             public void parpared() {
                 LogUtils.d("ffmpeg: parpared ");
                 jniSdk.setVolume(volumeProgress);
+                jniSdk.setMute(channel_mute);
                 jniSdk.n_start();
             }
 
