@@ -290,10 +290,22 @@
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_gravity="center"
+                android:layout_marginEnd="2dp"
                 android:layout_weight="1"
                 android:background="@android:color/darker_gray"
                 android:gravity="center"
                 android:text="音量："
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_valume_db"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:gravity="center"
+                android:text="分贝："
                 android:textColor="@android:color/black" />
         </LinearLayout>
     </LinearLayout>

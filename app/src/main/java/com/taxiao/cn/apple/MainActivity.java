@@ -13,6 +13,7 @@ import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
+import com.taxiao.ffmpeg.utils.IFFmpegValumeDBListener;
 import com.taxiao.ffmpeg.utils.TXConstant;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
 import com.taxiao.ffmpeg.utils.XXPermissionsUtils;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_pitch;
     private TextView tv_speed;
     private TextView tv_valume;
+    private TextView tv_valume_db;
 
     private JniSdkImpl jniSdk;
     private ExecutorService executorService;
@@ -68,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         tv_pitch = findViewById(R.id.tv_pitch);
         tv_speed = findViewById(R.id.tv_speed);
         tv_valume = findViewById(R.id.tv_valume);
+        tv_valume_db = findViewById(R.id.tv_valume_db);
 
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
@@ -360,6 +363,18 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         tv_time_call.setText("播放完成");
+                    }
+                });
+            }
+        });
+
+        jniSdk.setIFFmpegValumeDBListener(new IFFmpegValumeDBListener() {
+            @Override
+            public void onDbValue(final int db) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv_valume_db.setText(getString(R.string.audio_valume_db, String.valueOf(db)));
                     }
                 });
             }

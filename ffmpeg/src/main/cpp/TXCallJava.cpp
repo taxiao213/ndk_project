@@ -16,7 +16,12 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodIdTimeInfo = jniEnv->GetMethodID(aClass, JAVA_METHOD_TIME_INFO, "(II)V");
         jmethodIdError = jniEnv->GetMethodID(aClass, JAVA_METHOD_ERROR, "(ILjava/lang/String;)V");
         jmethodIdComplete = jniEnv->GetMethodID(aClass, JAVA_METHOD_COMPLETE, "()V");
+        jmethodIdValumeDB = jniEnv->GetMethodID(aClass, JAVA_METHOD_VALUME_DB, "(I)V");
     }
+}
+
+TXCallJava::~TXCallJava() {
+
 }
 
 void TXCallJava::onParpared(int type) {
@@ -95,8 +100,16 @@ void TXCallJava::onCallComplete(int type) {
     }
 }
 
-
-TXCallJava::~TXCallJava() {
-
+void TXCallJava::onCallValumeDB(int type, int db) {
+    if (type == MAIN_THREAD) {
+        jniEnv->CallVoidMethod(job, jmethodIdValumeDB, db);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        env->CallVoidMethod(job, jmethodIdValumeDB, db);
+        javaVm->DetachCurrentThread();
+    }
 }
 

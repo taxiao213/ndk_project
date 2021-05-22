@@ -173,6 +173,12 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
 //            (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
 //                                                     (char *) txAudio->buffer,
 //                                                     bufferSize);
+            // 回调分贝值
+//            txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
+//                    reinterpret_cast<char *>(txAudio->buffer), bufferSize * 2 * 2));
+
+            txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
+                    reinterpret_cast<char *>(txAudio->sampleBuffer), bufferSize * 2 * 2));
 
             // soundtouch 使用
             (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
@@ -532,4 +538,20 @@ void TXAudio::setSpeed(float speed) {
     if (soundTouch != NULL) {
         soundTouch->setTempo(speed);
     }
+}
+
+int TXAudio::getPcmDB(char *pcmcta, size_t pcmsize) {
+    int db = 0;
+    short int pervalve = 0;
+    double sum = 0;
+    for (int i = 0; i < pcmsize; i += 2) {
+        memcpy(&pervalve, pcmcta, 2);
+        sum += abs(pervalve);
+    }
+    sum = sum / (pcmsize / 2);
+    if (sum > 0) {
+        db = 20.0 * log10(sum);
+    }
+    SDK_LOG_D("getPcmdb %d ", db);
+    return db;
 }

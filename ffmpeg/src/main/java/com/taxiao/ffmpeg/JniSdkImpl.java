@@ -7,6 +7,7 @@ import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
+import com.taxiao.ffmpeg.utils.IFFmpegValumeDBListener;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
 
 import java.util.concurrent.ExecutorService;
@@ -49,6 +50,7 @@ public class JniSdkImpl {
     private IFFmpegTimeListener iffmpegtimelistener;
     private IFFmpegErrorListener iffmpegerrorlistener;
     private IFFmpegCompleteListener iffmpegcompletelistener;
+    private IFFmpegValumeDBListener iffmpegValumeDBListener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
     private static int volumePercent = 100;
@@ -75,6 +77,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegCompleteListener(IFFmpegCompleteListener fFmpegCompleteListener) {
         this.iffmpegcompletelistener = fFmpegCompleteListener;
+    }
+
+    public void setIFFmpegValumeDBListener(IFFmpegValumeDBListener fFmpegValumeDBListener) {
+        this.iffmpegValumeDBListener = fFmpegValumeDBListener;
     }
 
     public void setSource(String filePath) {
@@ -193,6 +199,15 @@ public class JniSdkImpl {
             iffmpegcompletelistener.complete();
         }
         n_stop();
+    }
+
+    /**
+     * 音量分贝值回调
+     */
+    public void callOnValumeDB(int db) {
+        if (iffmpegValumeDBListener != null) {
+            iffmpegValumeDBListener.onDbValue(db);
+        }
     }
 
     public interface MyCallBack {

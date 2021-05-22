@@ -12,6 +12,7 @@
 #define JAVA_METHOD_TIME_INFO "callTimeInfo"
 #define JAVA_METHOD_ERROR "callOnError"
 #define JAVA_METHOD_COMPLETE "callOnComplete"
+#define JAVA_METHOD_VALUME_DB "callOnValumeDB"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -25,6 +26,7 @@ public:
     jmethodID jmethodIdTimeInfo;
     jmethodID jmethodIdError;
     jmethodID jmethodIdComplete;
+    jmethodID jmethodIdValumeDB;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -40,6 +42,8 @@ public:
     void onError(int type, int code, char* errorMsg);
 
     void onCallComplete(int type);
+
+    void onCallValumeDB(int type, int db);
 };
 
 

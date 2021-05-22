@@ -103,6 +103,8 @@ public:
 
     void setSpeed(float speed);
 
+    int getPcmDB(char *pcmcta,size_t pcmsize);
+
 };
 
 
