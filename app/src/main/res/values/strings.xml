@@ -4,4 +4,5 @@
     <string name="audio_speed">变速:%s</string>
     <string name="audio_valume">音量:%s</string>
     <string name="audio_valume_db">分贝:%s</string>
+    <string name="audio_record">录音时间:%s</string>
 </resources>

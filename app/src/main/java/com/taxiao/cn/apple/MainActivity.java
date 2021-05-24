@@ -12,6 +12,7 @@ import com.taxiao.ffmpeg.utils.Function;
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
+import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegValumeDBListener;
 import com.taxiao.ffmpeg.utils.TXConstant;
@@ -31,13 +32,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_speed;
     private TextView tv_valume;
     private TextView tv_valume_db;
+    private TextView tv_record_time;
 
     private JniSdkImpl jniSdk;
     private ExecutorService executorService;
     private String filePath;
     private String pcmFilePath;
     private int seekProgress;
-    private int volumeProgress;
+    private int volumeProgress = Constant.VOLUME_PROGRESS;
     private int channel_mute = TXConstant.CHANNEL_STEREO;
     private float pitchProgress = Constant.INIT_PITCH_COEFFICIENT;
     private float speedProgress = Constant.INIT_SPEED_COEFFICIENT;
@@ -72,12 +74,19 @@ public class MainActivity extends AppCompatActivity {
         tv_valume = findViewById(R.id.tv_valume);
         tv_valume_db = findViewById(R.id.tv_valume_db);
 
+        TextView tv_audio_start = findViewById(R.id.tv_audio_start);
+        TextView tv_audio_pause = findViewById(R.id.tv_audio_pause);
+        TextView tv_audio_resume = findViewById(R.id.tv_audio_resume);
+        TextView tv_audio_stop = findViewById(R.id.tv_audio_stop);
+        tv_record_time = findViewById(R.id.tv_record_time);
+
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
-        seekbar_volume.setProgress(Constant.VOLUME_PROGRESS);
+        seekbar_volume.setProgress(volumeProgress);
         tv_valume.setText(getString(R.string.audio_valume, String.valueOf(volumeProgress)));
         tv_pitch.setText(getString(R.string.audio_pitch, String.valueOf(pitchProgress)));
         tv_speed.setText(getString(R.string.audio_speed, String.valueOf(speedProgress)));
+        tv_record_time.setText(getString(R.string.audio_record, String.valueOf(0)));
 
         jniSdk = new JniSdkImpl();
 
@@ -177,6 +186,38 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // 切换网络和本地播放地址
                 tv_source_change.setSelected(!tv_source_change.isSelected());
+                jniSdk.stopRecord();
+                jniSdk.n_stop();
+                parpared();
+            }
+        });
+
+        tv_audio_start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File file = new File(getCacheDir(), "record.aac");
+                jniSdk.startRecord(file);
+            }
+        });
+
+        tv_audio_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.resumeRecord(false);
+            }
+        });
+
+        tv_audio_resume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.resumeRecord(true);
+            }
+        });
+
+        tv_audio_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jniSdk.stopRecord();
             }
         });
 
@@ -375,6 +416,18 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         tv_valume_db.setText(getString(R.string.audio_valume_db, String.valueOf(db)));
+                    }
+                });
+            }
+        });
+
+        jniSdk.setIFFmpegRecordTimeListener(new IFFmpegRecordTimeListener() {
+            @Override
+            public void onRecordTime(final float time) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv_record_time.setText(getString(R.string.audio_record, String.valueOf((int) time)));
                     }
                 });
             }

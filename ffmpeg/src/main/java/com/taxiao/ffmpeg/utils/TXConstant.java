@@ -1,5 +1,7 @@
 package com.taxiao.ffmpeg.utils;
 
+import android.media.MediaCodecInfo;
+
 /**
  * Created by hanqq on 2021/5/21
  * Email:yin13753884368@163.com
@@ -12,4 +14,6 @@ public class TXConstant {
     public static int CHANNEL_RIGHT = 0;
     public static int CHANNEL_LEFT = 1;
     public static int CHANNEL_STEREO = 2;
+    public static int CHANNEL_COUNT = CHANNEL_STEREO;
+    public static int MEDIA_CODEC_PROFILE = MediaCodecInfo.CodecProfileLevel.AACObjectLC;
 }

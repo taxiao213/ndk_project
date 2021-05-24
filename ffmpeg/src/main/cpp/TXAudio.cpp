@@ -158,9 +158,13 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
         if (txAudio->playStatus->exit) {
             return;
         }
-//        int bufferSize = txAudio->resampleAudio(NULL);
-        // soundtouch 使用 不使用时打开注释
-        int bufferSize = txAudio->getSoundTouchData();
+        int bufferSize = 0;
+        if (USE_SOUND_TOUCH) {
+            // 使用 soundtouch
+            bufferSize = txAudio->getSoundTouchData();
+        } else {
+            bufferSize = txAudio->resampleAudio(NULL);
+        }
         if (bufferSize > 0) {
             SDK_LOG_D("bqPlayerCallback %d ", bufferSize);
             // buffer 理论上播放需要的时间
@@ -170,20 +174,41 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
                 txAudio->txCallJava
                         ->onTimeInfo(CHILD_THREAD, txAudio->clock, txAudio->duration);
             }
-//            (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
-//                                                     (char *) txAudio->buffer,
-//                                                     bufferSize);
-            // 回调分贝值
-//            txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
-//                    reinterpret_cast<char *>(txAudio->buffer), bufferSize * 2 * 2));
 
-            txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
-                    reinterpret_cast<char *>(txAudio->sampleBuffer), bufferSize * 2 * 2));
+            if (USE_SOUND_TOUCH) {
+                // 使用 soundtouch
+                (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
+                                                         (char *) txAudio->sampleBuffer,
+                                                         bufferSize * 2 * 2);
 
-            // soundtouch 使用
-            (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
-                                                     (char *) txAudio->sampleBuffer,
-                                                     bufferSize * 2 * 2);
+                txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
+                        reinterpret_cast<char *>(txAudio->sampleBuffer), bufferSize * 2 * 2));
+
+                if (txAudio->resumeRecord) {
+                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
+                                                         txAudio->sampleBuffer);
+                    float time = (bufferSize * 2 * 2 * 1.0f) / (2 * 2 * (txAudio->sample_rate));
+                    (txAudio->recordTime) += time;
+                    txAudio->txCallJava->onCallOnRecordTime(CHILD_THREAD, txAudio->recordTime);
+                    SDK_LOG_D("totalTime: %f , currentTime: %f ", txAudio->recordTime, time);
+                }
+            } else {
+                (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
+                                                         (char *) txAudio->buffer,
+                                                         bufferSize);
+                // 回调分贝值
+                txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
+                        reinterpret_cast<char *>(txAudio->buffer), bufferSize * 2 * 2));
+
+                if (txAudio->resumeRecord) {
+                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
+                                                         txAudio->buffer);
+                    float time = (bufferSize * 2 * 2 * 1.0f) / (2 * 2 * (txAudio->sample_rate));
+                    (txAudio->recordTime) += time;
+                    txAudio->txCallJava->onCallOnRecordTime(CHILD_THREAD, txAudio->recordTime);
+                    SDK_LOG_D("totalTime: %f , currentTime: %f ", txAudio->recordTime, time);
+                }
+            }
         }
     }
 }
@@ -305,17 +330,19 @@ void TXAudio::initOpenSLES() {
     * create audio player:
     * fast audio does not support when SL_IID_EFFECTSEND is required, skip it
     * for fast audio case
+    *
+    * SL_IID_PLAYBACKRATE 解决切换音乐时卡顿
     */
-    const SLInterfaceID audio_ids[4] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME,
-                                        SL_IID_MUTESOLO};
-    const SLboolean audio_req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
-                                    SL_BOOLEAN_TRUE};
+    const SLInterfaceID audio_ids[5] = {SL_IID_BUFFERQUEUE, SL_IID_EFFECTSEND, SL_IID_VOLUME,
+                                        SL_IID_MUTESOLO, SL_IID_PLAYBACKRATE};
+    const SLboolean audio_req[5] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
+                                    SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 //    const SLInterfaceID audio_ids[1] = {SL_IID_BUFFERQUEUE};
 //    const SLboolean audio_req[1] = {SL_BOOLEAN_TRUE};
 
     // create audio player:
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayObject, &slDataSource,
-                                                &audioSnk, 4, audio_ids, audio_req);
+                                                &audioSnk, 5, audio_ids, audio_req);
     assert(SL_RESULT_SUCCESS == result);
     (void) result;
 
@@ -388,6 +415,7 @@ void TXAudio::pause() {
 
 // 停止播放
 void TXAudio::stop() {
+    recordTime = 0.0f;
     if (bqPlayerPlay != NULL) {
         (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
     }

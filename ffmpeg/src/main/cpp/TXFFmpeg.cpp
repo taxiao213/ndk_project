@@ -275,5 +275,32 @@ void TXFFmpeg::setSpeed(float speed) {
     }
 }
 
+jint TXFFmpeg::getSampleRate() {
+    if (pAudio != NULL) {
+        return pAudio->sample_rate;
+    }
+    return 0;
+}
+
+void TXFFmpeg::startRecord() {
+    if (pAudio != NULL) {
+        pAudio->resumeRecord = true;
+        pAudio->recordTime = 0.0f;
+    }
+}
+
+void TXFFmpeg::stopRecord() {
+    if (pAudio != NULL) {
+        pAudio->resumeRecord = false;
+        pAudio->recordTime = 0.0f;
+    }
+}
+
+void TXFFmpeg::resumeRecord(bool isRecord) {
+    if (pAudio != NULL) {
+        pAudio->resumeRecord = isRecord;
+    }
+}
+
 
 

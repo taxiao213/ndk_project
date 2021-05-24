@@ -6,10 +6,13 @@ import android.util.Log;
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
+import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegValumeDBListener;
+import com.taxiao.ffmpeg.utils.TXMediacodecUtil;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +24,8 @@ import java.util.concurrent.Executors;
  * Github:https://github.com/taxiao213
  */
 public class JniSdkImpl {
+    private String TAG = JniSdkImpl.this.getClass().getSimpleName();
+
     static {
         if (BuildConfig.FFMPEG_BUILD_VERSION == 1) {
             System.loadLibrary("avcodec-57");
@@ -51,6 +56,7 @@ public class JniSdkImpl {
     private IFFmpegErrorListener iffmpegerrorlistener;
     private IFFmpegCompleteListener iffmpegcompletelistener;
     private IFFmpegValumeDBListener iffmpegValumeDBListener;
+    private IFFmpegRecordTimeListener iffmpegRecordTimeListener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
     private static int volumePercent = 100;
@@ -81,6 +87,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegValumeDBListener(IFFmpegValumeDBListener fFmpegValumeDBListener) {
         this.iffmpegValumeDBListener = fFmpegValumeDBListener;
+    }
+
+    public void setIFFmpegRecordTimeListener(IFFmpegRecordTimeListener fFmpegRecordTimeListener) {
+        this.iffmpegRecordTimeListener = fFmpegRecordTimeListener;
     }
 
     public void setSource(String filePath) {
@@ -120,6 +130,28 @@ public class JniSdkImpl {
     public void setSpeed(float speed) {
         n_speed(speed);
     }
+
+    // 开始录音
+    public void startRecord(File file) {
+        int sampleRate = n_getSampleRate();
+        Log.d(TAG, "resumeRecord sampleRate : " + sampleRate);
+        if (sampleRate > 0) {
+            TXMediacodecUtil.getInstance().createAudioCodec(sampleRate, file);
+            n_startRecord();
+        }
+    }
+
+    // 暂停 恢复录音 true 恢复 false 暂停
+    public void resumeRecord(boolean isStart) {
+        n_resumeRecord(isStart);
+    }
+
+    // 停止录音
+    public void stopRecord() {
+        TXMediacodecUtil.getInstance().destroy();
+        n_stopRecord();
+    }
+
     // -------------------------   c++ 回调函数 --------------------------------------
 
     /**
@@ -210,6 +242,16 @@ public class JniSdkImpl {
         }
     }
 
+    public void callOnPcmTAAc(int size, byte[] buffer) {
+        TXMediacodecUtil.getInstance().encodePcmTAAc(size, buffer);
+    }
+
+    public void callOnRecordTime(float time) {
+        if (iffmpegRecordTimeListener != null) {
+            iffmpegRecordTimeListener.onRecordTime(time);
+        }
+    }
+
     public interface MyCallBack {
         void error(int code, String name);
 
@@ -262,5 +304,17 @@ public class JniSdkImpl {
 
     // 设置变速
     private native void n_speed(float speed);
+
+    // 开始录音
+    private native void n_startRecord();
+
+    // 是否继续录音  true 继续  false 暂停录音
+    private native void n_resumeRecord(boolean resumeRecord);
+
+    // 停止录音
+    private native void n_stopRecord();
+
+    // 返回 sampleRate
+    private native int n_getSampleRate();
 
 }

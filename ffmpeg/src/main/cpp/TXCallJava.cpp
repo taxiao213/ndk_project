@@ -17,6 +17,8 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodIdError = jniEnv->GetMethodID(aClass, JAVA_METHOD_ERROR, "(ILjava/lang/String;)V");
         jmethodIdComplete = jniEnv->GetMethodID(aClass, JAVA_METHOD_COMPLETE, "()V");
         jmethodIdValumeDB = jniEnv->GetMethodID(aClass, JAVA_METHOD_VALUME_DB, "(I)V");
+        jmethodIdPcmAAc = jniEnv->GetMethodID(aClass, JAVA_METHOD_PCM_AAC, "(I[B)V");
+        jmethodIdRecordTime = jniEnv->GetMethodID(aClass, JAVA_METHOD_RECORD_TIME, "(F)V");
     }
 }
 
@@ -109,6 +111,38 @@ void TXCallJava::onCallValumeDB(int type, int db) {
             return;
         }
         env->CallVoidMethod(job, jmethodIdValumeDB, db);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+void TXCallJava::onCallOnPcmTAAc(int type, int size, void *pcmBuffer) {
+    if (type == MAIN_THREAD) {
+        jbyteArray pArray = jniEnv->NewByteArray(size);
+        jniEnv->SetByteArrayRegion(pArray, 0, size, static_cast<const jbyte *>(pcmBuffer));
+        jniEnv->CallVoidMethod(job, jmethodIdPcmAAc, size, pArray);
+        jniEnv->DeleteLocalRef(pArray);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        jbyteArray pArray = env->NewByteArray(size);
+        env->SetByteArrayRegion(pArray, 0, size, static_cast<const jbyte *>(pcmBuffer));
+        env->CallVoidMethod(job, jmethodIdPcmAAc, size, pArray);
+        env->DeleteLocalRef(pArray);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+void TXCallJava::onCallOnRecordTime(int type, float time) {
+    if (type == MAIN_THREAD) {
+        jniEnv->CallVoidMethod(job, jmethodIdRecordTime, time);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return;
+        }
+        env->CallVoidMethod(job, jmethodIdRecordTime, time);
         javaVm->DetachCurrentThread();
     }
 }

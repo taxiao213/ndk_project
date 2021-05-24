@@ -25,6 +25,9 @@ using namespace soundtouch;
 #define CHANNEL_RIGHT 0
 #define CHANNEL_LEFT 1
 
+// true 使用 soundtouch
+#define USE_SOUND_TOUCH true
+
 class TXAudio {
 public:
     int streamIndex = -1;
@@ -55,7 +58,7 @@ public:
     SLMuteSoloItf fdPlayerMuteSolo = NULL; // 声道
     int volumePercent = 100;
     int muteChannel = CHANNEL_LEFT;
-    int pitchPercent  = 1.0;
+    int pitchPercent = 1.0;
     int speedPercent = 1.0;
 
     // duration
@@ -72,6 +75,10 @@ public:
     bool finish = true;
     int nb = 0;
     int num = 0;
+
+    // record 默认 false
+    bool resumeRecord = false;
+    float recordTime = 0.0f;
 public:
     TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 
@@ -103,7 +110,7 @@ public:
 
     void setSpeed(float speed);
 
-    int getPcmDB(char *pcmcta,size_t pcmsize);
+    int getPcmDB(char *pcmcta, size_t pcmsize);
 
 };
 

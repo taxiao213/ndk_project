@@ -13,6 +13,8 @@
 #define JAVA_METHOD_ERROR "callOnError"
 #define JAVA_METHOD_COMPLETE "callOnComplete"
 #define JAVA_METHOD_VALUME_DB "callOnValumeDB"
+#define JAVA_METHOD_PCM_AAC "callOnPcmTAAc"
+#define JAVA_METHOD_RECORD_TIME "callOnRecordTime"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -27,6 +29,8 @@ public:
     jmethodID jmethodIdError;
     jmethodID jmethodIdComplete;
     jmethodID jmethodIdValumeDB;
+    jmethodID jmethodIdPcmAAc;
+    jmethodID jmethodIdRecordTime;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -39,11 +43,15 @@ public:
 
     void onTimeInfo(int type, int currentTime, int total);
 
-    void onError(int type, int code, char* errorMsg);
+    void onError(int type, int code, char *errorMsg);
 
     void onCallComplete(int type);
 
     void onCallValumeDB(int type, int db);
+
+    void onCallOnPcmTAAc(int type, int size, void *pcmBuffer);
+
+    void onCallOnRecordTime(int type, float time);
 };
 
 

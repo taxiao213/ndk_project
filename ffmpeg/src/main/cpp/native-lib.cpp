@@ -267,6 +267,40 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1speed(JNIEnv *env, jobject thiz, jfloat spe
     }
 }
 
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1getSampleRate(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        return ffmpeg->getSampleRate();
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1startRecord(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        ffmpeg->startRecord();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1resumeRecord(JNIEnv *env, jobject thiz,
+                                                  jboolean resumeRecord) {
+    if (ffmpeg != NULL) {
+        ffmpeg->resumeRecord(resumeRecord);
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1stopRecord(JNIEnv *env, jobject thiz) {
+    if (ffmpeg != NULL) {
+        ffmpeg->stopRecord();
+    }
+}
+
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"

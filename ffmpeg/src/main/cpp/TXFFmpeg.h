@@ -56,6 +56,15 @@ public:
     void setPitch(float pitch);
 
     void setSpeed(float speed);
+
+    void startRecord();
+
+    void resumeRecord(bool resume);
+
+    void stopRecord();
+
+    jint getSampleRate();
+
 };
 
 
