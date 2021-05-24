@@ -46,6 +46,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
     while (playStatus != NULL && !playStatus->exit) {
         if (queue->getQueueSize() == 0) {
             SDK_LOG_D("resampleAudio 加载");
+            av_usleep(SLEEP_TIME);
             if (!playStatus->load) {
                 playStatus->load = true;
                 txCallJava->onLoad(CHILD_THREAD, true);
@@ -458,6 +459,9 @@ void TXAudio::release() {
         free(sampleBuffer);
         sampleBuffer = NULL;
     }
+    if (out_buffer != NULL) {
+        out_buffer = NULL;
+    }
     if (pCodecContext != NULL) {
         avcodec_close(pCodecContext);
         avcodec_free_context(&pCodecContext);
@@ -469,7 +473,6 @@ void TXAudio::release() {
     if (txCallJava != NULL) {
         txCallJava = NULL;
     }
-
 }
 
 // 0是最大值 -5000是最小值

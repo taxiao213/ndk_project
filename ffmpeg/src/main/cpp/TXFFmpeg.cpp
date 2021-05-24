@@ -142,10 +142,13 @@ void TXFFmpeg::start() {
     while (playStatus != NULL && !playStatus->exit) {
 
         if (playStatus->seek) {
+            // 循环的地方 加睡眠,降低 CPU 使用率
+            av_usleep(SLEEP_TIME);
             continue;
         }
 
         if (pAudio->queue->getQueueSize() > 40) {
+            av_usleep(SLEEP_TIME);
             continue;
         }
         AVPacket *pPacket = av_packet_alloc();
@@ -172,6 +175,7 @@ void TXFFmpeg::start() {
             while (playStatus != NULL && !playStatus->exit) {
                 SDK_LOG_D("释放 ");
                 if (pAudio->queue->getQueueSize() > 0) {
+                    av_usleep(SLEEP_TIME);
                     continue;
                 } else {
                     playStatus->exit = true;

@@ -13,6 +13,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 #include <libavutil/rational.h>
+#include <libavutil/time.h>
 }
 
 #include "soundtouch/source/SoundTouch.h"
@@ -27,6 +28,7 @@ using namespace soundtouch;
 
 // true 使用 soundtouch
 #define USE_SOUND_TOUCH true
+#define SLEEP_TIME 1000*100
 
 class TXAudio {
 public:
