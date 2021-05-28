@@ -65,6 +65,7 @@ public:
 
     jint getSampleRate();
 
+    void cutAudio(jint startTime, jint endTime, jboolean isShowPcm, const char *url);
 };
 
 

@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
+import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
@@ -57,6 +58,7 @@ public class JniSdkImpl {
     private IFFmpegCompleteListener iffmpegcompletelistener;
     private IFFmpegValumeDBListener iffmpegValumeDBListener;
     private IFFmpegRecordTimeListener iffmpegRecordTimeListener;
+    private IFFmpegCutAudioListener iffmpegCutAudioListener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
     private static int volumePercent = 100;
@@ -91,6 +93,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegRecordTimeListener(IFFmpegRecordTimeListener fFmpegRecordTimeListener) {
         this.iffmpegRecordTimeListener = fFmpegRecordTimeListener;
+    }
+
+    public void setIFFmpegCutAudioListener(IFFmpegCutAudioListener fFmpegCutAudioListener) {
+        this.iffmpegCutAudioListener = fFmpegCutAudioListener;
     }
 
     public void setSource(String filePath) {
@@ -152,6 +158,9 @@ public class JniSdkImpl {
         n_stopRecord();
     }
 
+    public void cutAudio(int startTime, int endTime, boolean isShowPcm, String cutPath) {
+        n_cutAudio(startTime, endTime, isShowPcm, cutPath);
+    }
     // -------------------------   c++ 回调函数 --------------------------------------
 
     /**
@@ -227,10 +236,10 @@ public class JniSdkImpl {
      * 播放完成的回调
      */
     public void callOnComplete() {
+        n_stop();
         if (iffmpegcompletelistener != null) {
             iffmpegcompletelistener.complete();
         }
-        n_stop();
     }
 
     /**
@@ -249,6 +258,12 @@ public class JniSdkImpl {
     public void callOnRecordTime(float time) {
         if (iffmpegRecordTimeListener != null) {
             iffmpegRecordTimeListener.onRecordTime(time);
+        }
+    }
+
+    public void callOnCutAudio(int sampleRate, byte[] buffer) {
+        if (iffmpegCutAudioListener != null) {
+            iffmpegCutAudioListener.cutAudio(sampleRate, buffer);
         }
     }
 
@@ -316,5 +331,9 @@ public class JniSdkImpl {
 
     // 返回 sampleRate
     private native int n_getSampleRate();
+
+    private native void n_cutAudio(int startTime, int endTime, boolean isShowPcm, String cutPath);
+
+    public native void test();
 
 }

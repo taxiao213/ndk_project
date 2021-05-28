@@ -19,10 +19,75 @@ TXAudio::TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_
     soundTouch->setChannels(2);
     soundTouch->setPitch(pitchPercent);
     soundTouch->setTempo(speedPercent);
+
+    // bufferqueue
+    bufferQueue = new TXBufferQueue(txPlayStatus);
 }
 
 TXAudio::~TXAudio() {
 
+}
+
+// 音频分包机制
+void *bufferBack(void *data) {
+    // 录音文件提取
+    TXAudio *txAudio = static_cast<TXAudio *>(data);
+    while (txAudio != NULL && txAudio->playStatus != NULL && !txAudio->playStatus->exit) {
+        SDK_LOG_D("bufferBack");
+        if (txAudio->resumeRecord) {
+            if (txAudio->bufferQueue->getBufferSize() > 0) {
+                TXPcmBean *txPcmBean = NULL;
+                txAudio->bufferQueue->getBuffer(&txPcmBean);
+                if (txPcmBean == NULL) {
+                    continue;
+                }
+                SDK_LOG_D("txPcmBean buffer size is %d", txPcmBean->buffersize);
+                // 不需要分包
+                if (txPcmBean->buffersize < txAudio->defaultBufferSize) {
+                    SDK_LOG_D("txPcmBean buffer 不需要分包");
+                    if (txAudio->resumeRecord) {
+                        txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, txPcmBean->buffersize,
+                                                             txPcmBean->buffer);
+                    }
+                } else {
+                    // 需要分包处理
+                    // 2021.05.27 分包后录音会有卡顿的声音，后续再去处理
+                    int num = txPcmBean->buffersize / txAudio->defaultBufferSize;
+                    int sub = txPcmBean->buffersize % txAudio->defaultBufferSize;
+                    SDK_LOG_D("txPcmBean buffer 需要分包 num:%d,sub:%d", num, sub);
+                    for (int i = 0; i < num; i++) {
+                        if (txAudio->resumeRecord) {
+                            char *buffer = static_cast<char *>(malloc(txAudio->defaultBufferSize));
+                            memcmp(buffer,
+                                   txPcmBean->buffer + (i * txAudio->defaultBufferSize),
+                                   txAudio->defaultBufferSize);
+                            txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD,
+                                                                 txAudio->defaultBufferSize,
+                                                                 buffer);
+                            free(buffer);
+                            buffer = NULL;
+                        }
+                    }
+                    if (sub > 0) {
+                        SDK_LOG_D("txPcmBean buffer 需要分包2 num:%d,sub:%d", num, sub);
+                        if (txAudio->resumeRecord) {
+                            char *buffer = static_cast<char *>(malloc(sub));
+                            memcpy(buffer, txPcmBean->buffer + num * txAudio->defaultBufferSize,
+                                   sub);
+                            txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD,
+                                                                 sub, buffer);
+                            free(buffer);
+                            buffer = NULL;
+                        }
+                    }
+                }
+                delete (txPcmBean);
+                txPcmBean = NULL;
+            }
+        }
+    }
+    pthread_exit(&(txAudio->pthreadBuffer));
+    SDK_LOG_D("txPcmBean buffer exit");
 }
 
 // 重采样
@@ -37,9 +102,10 @@ void *decodePlay(void *data) {
 void TXAudio::play() {
     SDK_LOG_D("play");
     pthread_create(&p_thread, NULL, decodePlay, this);
+    pthread_create(&pthreadBuffer, NULL, bufferBack, this);
 }
 
-//FILE *outFile = fopen("/data/data/com.taxiao.cn.apple/cache/test.pcm", "w");
+FILE *outFile = fopen("/data/data/com.taxiao.cn.apple/cache/test2.pcm", "w");
 
 int TXAudio::resampleAudio(void **pcmbuffer) {
     SDK_LOG_D("resampleAudio");
@@ -59,26 +125,29 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
                 txCallJava->onLoad(CHILD_THREAD, false);
             }
         }
-
-        SDK_LOG_D("resampleAudio 获取数据");
-        avPacket = av_packet_alloc();
-        if (queue->getAvpacket(avPacket) != 0) {
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
-            continue;
-        }
-        ret = avcodec_send_packet(pCodecContext, avPacket);
-        if (ret != 0) {
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
-            continue;
+        // .ape 文件一个 AVPacket 会有多个 AVFrame ,需要多次 avcodec_receive_frame 取出
+        if (readFrameFinished) {
+            SDK_LOG_D("resampleAudio 获取数据");
+            avPacket = av_packet_alloc();
+            if (queue->getAvpacket(avPacket) != 0) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                continue;
+            }
+            ret = avcodec_send_packet(pCodecContext, avPacket);
+            if (ret != 0) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                continue;
+            }
         }
         // 发送解码器，成功会返回一个avFrame
         avFrame = av_frame_alloc();
         ret = avcodec_receive_frame(pCodecContext, avFrame);
         if (ret == 0) {
+            readFrameFinished = false;
             // 0 成功 声道布局
             if (avFrame->channels > 0 && avFrame->channel_layout == 0) {
                 avFrame->channel_layout = av_get_default_channel_layout(avFrame->channels);
@@ -107,6 +176,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
                     swr_free(&swrContext);
                     swrContext = NULL;
                 }
+                readFrameFinished = true;
                 continue;
             }
 
@@ -131,6 +201,17 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
 //            fwrite(buffer, 1, data_size, outFile);
             SDK_LOG_D("resampleAudio 写入文件");
 
+            // 时间 返回
+//            if (data_size > 0) {
+//                SDK_LOG_D("bqPlayerCallback %d ", data_size);
+//                // buffer 理论上播放需要的时间
+//                clock += data_size / ((double) (sample_rate * 2 * 2));
+//                if (clock - last_time >= 0.1) {
+//                    last_time = clock;
+//                    txCallJava->onTimeInfo(CHILD_THREAD, clock, duration);
+//                }
+//            }
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -141,6 +222,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
             swrContext = NULL;
             break;
         } else {
+            readFrameFinished = true;
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -174,8 +256,9 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
                 txAudio->last_time = txAudio->clock;
                 txAudio->txCallJava
                         ->onTimeInfo(CHILD_THREAD, txAudio->clock, txAudio->duration);
+                SDK_LOG_D("currenttime %d , totalTime %d ", (int) txAudio->clock,
+                          txAudio->duration);
             }
-
             if (USE_SOUND_TOUCH) {
                 // 使用 soundtouch
                 (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
@@ -185,13 +268,35 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
                 txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
                         reinterpret_cast<char *>(txAudio->sampleBuffer), bufferSize * 2 * 2));
 
+                // media codec 设置 KEY_MAX_INPUT_SIZE，需要做分包处理
                 if (txAudio->resumeRecord) {
-                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
-                                                         txAudio->sampleBuffer);
+                    txAudio->bufferQueue->putBuffer(txAudio->sampleBuffer, bufferSize * 2 * 2);
+                }
+
+                if (txAudio->resumeRecord) {
+//                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
+//                                                         txAudio->sampleBuffer);
                     float time = (bufferSize * 2 * 2 * 1.0f) / (2 * 2 * (txAudio->sample_rate));
                     (txAudio->recordTime) += time;
                     txAudio->txCallJava->onCallOnRecordTime(CHILD_THREAD, txAudio->recordTime);
                     SDK_LOG_D("totalTime: %f , currentTime: %f ", txAudio->recordTime, time);
+                }
+                // 时间需要强转
+                int currentTime = (int) txAudio->clock;
+                if (txAudio->startTime > 0 && txAudio->endTime > 0 && txAudio->endTime > txAudio
+                        ->startTime && (currentTime >= txAudio->startTime) &&
+                    (currentTime <= txAudio->endTime)) {
+                    // 存储剪切文件
+                    if (txAudio->cutFile != NULL) {
+                        fwrite(txAudio->sampleBuffer, 1, bufferSize * 2 * 2, txAudio->cutFile);
+                    }
+                    if (txAudio->isShowPcm) {
+                        SDK_LOG_D("write currenttime %d , totalTime %d ", currentTime,
+                                  txAudio->duration);
+                        txAudio->txCallJava->onCallOnCutAudio(CHILD_THREAD, txAudio->sample_rate,
+                                                              bufferSize * 2 * 2,
+                                                              txAudio->sampleBuffer);
+                    }
                 }
             } else {
                 (*txAudio->bqPlayerBufferQueue)->Enqueue(txAudio->bqPlayerBufferQueue,
@@ -201,13 +306,36 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
                 txAudio->txCallJava->onCallValumeDB(CHILD_THREAD, txAudio->getPcmDB(
                         reinterpret_cast<char *>(txAudio->buffer), bufferSize * 2 * 2));
 
+                // media codec 设置 KEY_MAX_INPUT_SIZE，需要做分包处理
                 if (txAudio->resumeRecord) {
-                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
-                                                         txAudio->buffer);
-                    float time = (bufferSize * 2 * 2 * 1.0f) / (2 * 2 * (txAudio->sample_rate));
-                    (txAudio->recordTime) += time;
-                    txAudio->txCallJava->onCallOnRecordTime(CHILD_THREAD, txAudio->recordTime);
-                    SDK_LOG_D("totalTime: %f , currentTime: %f ", txAudio->recordTime, time);
+                    txAudio->bufferQueue->putBuffer(reinterpret_cast<SAMPLETYPE *>(txAudio->buffer),
+                                                    bufferSize * 2 * 2);
+                }
+
+//                if (txAudio->resumeRecord) {
+//                    txAudio->txCallJava->onCallOnPcmTAAc(CHILD_THREAD, bufferSize * 2 * 2,
+//                                                         txAudio->buffer);
+//                    float time = (bufferSize * 2 * 2 * 1.0f) / (2 * 2 * (txAudio->sample_rate));
+//                    (txAudio->recordTime) += time;
+//                    txAudio->txCallJava->onCallOnRecordTime(CHILD_THREAD, txAudio->recordTime);
+//                    SDK_LOG_D("totalTime: %f , currentTime: %f ", txAudio->recordTime, time);
+//                }
+                // 时间需要强转
+                int currentTime = (int) txAudio->clock;
+                if (txAudio->startTime > 0 && txAudio->endTime > 0 && txAudio->endTime > txAudio
+                        ->startTime && (currentTime >= txAudio->startTime) &&
+                    (currentTime <= txAudio->endTime)) {
+                    // 存储剪切文件
+                    if (txAudio->cutFile != NULL) {
+                        fwrite(txAudio->buffer, 1, bufferSize * 2 * 2, txAudio->cutFile);
+                    }
+                    if (txAudio->isShowPcm) {
+                        SDK_LOG_D("write currenttime %d , totalTime %d ", currentTime,
+                                  txAudio->duration);
+                        txAudio->txCallJava->onCallOnCutAudio(CHILD_THREAD, txAudio->sample_rate,
+                                                              bufferSize * 2 * 2,
+                                                              txAudio->buffer);
+                    }
                 }
             }
         }
@@ -473,6 +601,19 @@ void TXAudio::release() {
     if (txCallJava != NULL) {
         txCallJava = NULL;
     }
+    startTime = 0;
+    endTime = 0;
+    isShowPcm = false;
+    if (cutFile != NULL) {
+        cutFile = NULL;
+    }
+    if (bufferQueue != NULL) {
+        bufferQueue->noticeThread();
+        pthread_join(pthreadBuffer, NULL);
+        bufferQueue->release();
+        delete (bufferQueue);
+        bufferQueue = NULL;
+    }
 }
 
 // 0是最大值 -5000是最小值
@@ -522,21 +663,32 @@ void TXAudio::setMute(int channel) {
 int TXAudio::getSoundTouchData() {
     while (playStatus != NULL && !playStatus->exit) {
         out_buffer = NULL;
+        SDK_LOG_D("------------------------1");
         if (finish) {
             finish = false;
             // 只计算一次 sampleBuffer
+            SDK_LOG_D("------------------------2");
             data_size = resampleAudio(reinterpret_cast<void **>(&out_buffer));
+            SDK_LOG_D("------------------------21");
             if (data_size > 0) {
                 for (int i = 0; i < data_size / 2 + 1; i++) {
                     // FFmpeg 解出的数据是8bit, soundtouch 最低支持是16bit,
-                    sampleBuffer[i] = (out_buffer[i * 2] | (out_buffer[i * 2 + 1] << 8));
+                    if (out_buffer != NULL) {
+                        sampleBuffer[i] = (out_buffer[i * 2] | (out_buffer[i * 2 + 1] << 8));
+                    }
                 }
-                soundTouch->putSamples(sampleBuffer, nb);
-                // /4  两个声道 16位
-                num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
-                SDK_LOG_D("putSamples");
+                if (soundTouch != NULL) {
+                    soundTouch->putSamples(sampleBuffer, nb);
+                    // /4  两个声道 16位
+                    num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+                    SDK_LOG_D("------------------------3");
+                    SDK_LOG_D("putSamples");
+                }
             } else {
-                soundTouch->flush();
+                SDK_LOG_D("------------------------4");
+                if (soundTouch != NULL) {
+                    soundTouch->flush();
+                }
             }
         }
         if (num == 0) {
@@ -544,7 +696,10 @@ int TXAudio::getSoundTouchData() {
             continue;
         } else {
             if (out_buffer == NULL) {
-                num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+                SDK_LOG_D("------------------------5");
+                if (soundTouch != NULL) {
+                    num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+                }
                 SDK_LOG_D("receiveSamples");
                 if (num == 0) {
                     finish = true;

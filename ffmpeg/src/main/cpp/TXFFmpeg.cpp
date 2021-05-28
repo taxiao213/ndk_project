@@ -15,6 +15,7 @@ TXFFmpeg::TXFFmpeg(TXCallJava *txCallJava, TXPlayStatus *txPlayStatus, const cha
 }
 
 TXFFmpeg::~TXFFmpeg() {
+    SDK_LOG_D("release destroy");
     pthread_mutex_destroy(&initMutex);
     pthread_mutex_destroy(&seek_mutex);
 }
@@ -185,10 +186,10 @@ void TXFFmpeg::start() {
 
         }
     }
-    exit = true;
     if (callJava != NULL) {
         callJava->onCallComplete(CHILD_THREAD);
     }
+    exit = true;
     SDK_LOG_D("解码完成");
 }
 
@@ -206,10 +207,12 @@ void TXFFmpeg::pause() {
 
 void TXFFmpeg::release() {
     playStatus->exit = true;
+    SDK_LOG_D("release start");
     pthread_mutex_lock(&initMutex);
+    SDK_LOG_D("release start0101");
     int sleepCount = 0;
     while (!exit) {
-        if (sleepCount > 1000) {
+        if (sleepCount > 100) {
             exit = true;
         }
         SDK_LOG_D("wait ffmpeg %d", sleepCount);
@@ -221,18 +224,25 @@ void TXFFmpeg::release() {
         delete (pAudio);
         pAudio = NULL;
     }
+    SDK_LOG_D("release pAudio");
     if (pContext != NULL) {
         avformat_close_input(&pContext);
         avformat_free_context(pContext);
         pContext = NULL;
     }
+    SDK_LOG_D("release pContext");
     if (callJava != NULL) {
+        delete (callJava);
         callJava = NULL;
     }
+    SDK_LOG_D("release callJava");
     if (playStatus != NULL) {
+        delete (playStatus);
         playStatus = NULL;
     }
+    SDK_LOG_D("release playStatus");
     pthread_mutex_unlock(&initMutex);
+    SDK_LOG_D("release----------");
 }
 
 void TXFFmpeg::setVolume(int percent) {
@@ -253,6 +263,8 @@ void TXFFmpeg::setSeek(int64_t seconds) {
             pAudio->clock = 0;
             pAudio->last_time = 0;
             pthread_mutex_lock(&seek_mutex);
+            // 清空残留的 avframe
+            avcodec_flush_buffers(pAudio->pCodecContext);
             int64_t rel = seconds * duration / 100 * AV_TIME_BASE;
             avformat_seek_file(pContext, -1, INT64_MIN, rel, INT64_MAX, 0);
             pthread_mutex_unlock(&seek_mutex);
@@ -303,6 +315,19 @@ void TXFFmpeg::stopRecord() {
 void TXFFmpeg::resumeRecord(bool isRecord) {
     if (pAudio != NULL) {
         pAudio->resumeRecord = isRecord;
+    }
+}
+
+void TXFFmpeg::cutAudio(jint startTime, jint endTime, jboolean isShowPcm, const char *url) {
+    if (pAudio != NULL) {
+        SDK_LOG_D("startTime %d,endTime %d ", startTime, endTime);
+        if (startTime > 0 && endTime > startTime && endTime <= (pAudio->duration)) {
+            pAudio->startTime = startTime;
+            pAudio->endTime = endTime;
+            pAudio->isShowPcm = isShowPcm;
+            FILE *cutFile = fopen(url, "w");
+            pAudio->cutFile = cutFile;
+        }
     }
 }
 

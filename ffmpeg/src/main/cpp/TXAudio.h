@@ -17,6 +17,7 @@ extern "C" {
 }
 
 #include "soundtouch/source/SoundTouch.h"
+#include "TXBufferQueue.h"
 
 using namespace soundtouch;
 
@@ -45,6 +46,7 @@ public:
     int data_size = 0;
     int sample_rate = 0;
     TXCallJava *txCallJava = NULL;
+    bool readFrameFinished = true;
 
     // OpenSLES
     SLObjectItf engineObject = NULL;
@@ -81,6 +83,15 @@ public:
     // record 默认 false
     bool resumeRecord = false;
     float recordTime = 0.0f;
+    int startTime = 0;
+    int endTime = 0;
+    bool isShowPcm = false;
+    FILE *cutFile = NULL;
+
+    TXBufferQueue *bufferQueue = NULL;
+    pthread_t pthreadBuffer;
+    int defaultBufferSize = 4096;
+
 public:
     TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 

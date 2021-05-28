@@ -206,11 +206,15 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1pause(JNIEnv *env, jobject thiz) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_taxiao_ffmpeg_JniSdkImpl_n_1stop(JNIEnv *env, jobject thiz) {
+    // 开子线程去释放
     if (isExit) return;
     isExit = true;
     if (ffmpeg != NULL) {
+        SDK_LOG_D("release start00");
         ffmpeg->release();
+        SDK_LOG_D("release start11");
         delete (ffmpeg);
+        SDK_LOG_D("release start22");
         ffmpeg = NULL;
     }
     if (callJava != NULL) {
@@ -301,6 +305,17 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_n_1stopRecord(JNIEnv *env, jobject thiz) {
     }
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_n_1cutAudio(JNIEnv *env, jobject thiz, jint start_time,
+                                              jint end_time, jboolean is_show_pcm,
+                                              jstring filePath) {
+    if (ffmpeg != NULL) {
+        const char *url = env->GetStringUTFChars(filePath, 0);
+        ffmpeg->cutAudio(start_time, end_time, is_show_pcm, url);
+    }
+}
+
 //------------------------------- OpenSLES pcm -------------------------//
 
 extern "C"
@@ -309,4 +324,33 @@ Java_com_taxiao_ffmpeg_JniSdkImpl_testPlay(JNIEnv *env, jobject thiz, jstring pa
     const char *url = env->GetStringUTFChars(path, 0);
     new Opensles_test{url};
     env->ReleaseStringUTFChars(path, url);
+}
+
+#include "TXCallBack.h";
+
+extern "C" {
+#include <libavutil/time.h>
+};
+
+void setCallBack(TXCallBack *txCallBack) {
+    if (txCallBack != NULL) {
+        SDK_LOG_D("size:%d", txCallBack->buffer_size);
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_taxiao_ffmpeg_JniSdkImpl_test(JNIEnv *env, jobject thiz) {
+    TXCallBack *txCallBack = new TXCallBack(1, NULL);
+
+    void *cv = NULL;
+    int size = 0;
+    while (true) {
+        av_usleep(1000 * 1000);
+        txCallBack->buffer_size = size;
+        txCallBack->buffer = cv;
+        setCallBack(txCallBack);
+        size++;
+    }
+
 }

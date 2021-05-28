@@ -126,8 +126,8 @@ public class TXMediacodecUtil {
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
         // 码流压缩
         mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, TXConstant.MEDIA_CODEC_PROFILE);
-        // 决定输入的 encodePcmTAAc  byte
-        mediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 1024 * 10);
+        // 决定输入的 encodePcmTAAc  byte 分包处理会有卡顿的声音，后续再去处理
+        mediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
         mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
         info = new MediaCodec.BufferInfo();
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);

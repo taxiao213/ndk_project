@@ -64,6 +64,9 @@ add_library(
         TXAudio.cpp
         TXQueue.cpp
         TXPlayStatus.cpp
+        TXCallBack.cpp
+        TXBufferQueue.cpp
+        TXPcmBean.cpp
         test/thread_test.cpp
         test/Opensles_test.cpp
 )

@@ -42,8 +42,7 @@ ext {
     dependencies = [
             "appcompat"       : "androidx.appcompat:appcompat:$androidxAppcompatVersion",
             "constraintLayout": "androidx.constraintlayout:constraintlayout:$androidxConstraintLayoutVersion",
-
-//            "recyclerview"           : "androidx.recyclerview:recyclerview:$androidxRecyclerviewVersion",
+            "recyclerview"           : "androidx.recyclerview:recyclerview:$androidxRecyclerviewVersion",
 //            "swiperefreshlayout"     : "androidx.swiperefreshlayout:swiperefreshlayout:$androidxSwiperefreshlayoutVersion",
 //            "viewpager2"             : "androidx.viewpager2:viewpager2:$androidxViewpager2Version",
 //            "material"               : "com.google.android.material:material:$androidXmaterialVersion",

@@ -15,6 +15,7 @@
 #define JAVA_METHOD_VALUME_DB "callOnValumeDB"
 #define JAVA_METHOD_PCM_AAC "callOnPcmTAAc"
 #define JAVA_METHOD_RECORD_TIME "callOnRecordTime"
+#define JAVA_METHOD_CUT_AUDIO "callOnCutAudio"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -31,6 +32,7 @@ public:
     jmethodID jmethodIdValumeDB;
     jmethodID jmethodIdPcmAAc;
     jmethodID jmethodIdRecordTime;
+    jmethodID jmethodIdCutAudio;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -52,6 +54,8 @@ public:
     void onCallOnPcmTAAc(int type, int size, void *pcmBuffer);
 
     void onCallOnRecordTime(int type, float time);
+
+    void onCallOnCutAudio(int type, int sampleRate, int size, void *pcmBuffer);
 };
 
 

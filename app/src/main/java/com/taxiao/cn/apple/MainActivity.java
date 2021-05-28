@@ -1,15 +1,21 @@
 package com.taxiao.cn.apple;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.taxiao.cn.apple.model.Paramter;
+import com.taxiao.cn.apple.util.DialogUtils;
+import com.taxiao.cn.apple.util.FileUtils;
+import com.taxiao.cn.apple.util.LogUtils;
 import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
+import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
@@ -20,9 +26,16 @@ import com.taxiao.ffmpeg.utils.TimeInfoModel;
 import com.taxiao.ffmpeg.utils.XXPermissionsUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * 将音乐文件放到 assets 目录下,支持.ape , .wav , .mp3 , .flac , .aac 等格式
+ */
 public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.this.getClass().getSimpleName();
     private TextView tv_time_call;
@@ -43,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
     private int channel_mute = TXConstant.CHANNEL_STEREO;
     private float pitchProgress = Constant.INIT_PITCH_COEFFICIENT;
     private float speedProgress = Constant.INIT_SPEED_COEFFICIENT;
+    private ArrayList<Paramter> musicList = new ArrayList<>();
+    private Function<Paramter> function;
+    private DialogUtils dialogUtils;
+    private SeekBar seekbar_time;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         tv_time_call = findViewById(R.id.tv_time_call);
         tv_call_error = findViewById(R.id.tv_call_error);
         SeekBar seekbar_volume = findViewById(R.id.seekbar_volume);
-        SeekBar seekbar_time = findViewById(R.id.seekbar_time);
+        seekbar_time = findViewById(R.id.seekbar_time);
 
         TextView tv_stereo = findViewById(R.id.tv_stereo);
         TextView tv_left_channel = findViewById(R.id.tv_left_channel);
@@ -79,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_audio_resume = findViewById(R.id.tv_audio_resume);
         TextView tv_audio_stop = findViewById(R.id.tv_audio_stop);
         tv_record_time = findViewById(R.id.tv_record_time);
+        TextView tv_cut = findViewById(R.id.tv_cut);
 
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
@@ -185,10 +203,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // 切换网络和本地播放地址
-                tv_source_change.setSelected(!tv_source_change.isSelected());
-                jniSdk.stopRecord();
-                jniSdk.n_stop();
-                parpared();
+                dialogUtils = new DialogUtils(MainActivity.this).setVideoFunction(musicList, function);
             }
         });
 
@@ -218,6 +233,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 jniSdk.stopRecord();
+            }
+        });
+
+        tv_cut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File cutFile = new File(getCacheDir(), "cut.pcm");
+                jniSdk.cutAudio(Constant.CUT_START_TIME, Constant.CUT_END_TIME, true, cutFile.getAbsolutePath());
             }
         });
 
@@ -313,7 +336,18 @@ public class MainActivity extends AppCompatActivity {
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                filePath = FileUtils.copyAssetAndWrite(MainActivity.this, "meetyou.mp3");
+                // todo 将音乐文件放到 assets 目录下,支持.ape , .wav , .mp3 , .flac , .aac 等格式
+//                musicList.add(new Paramter(Constant.MUSIC_NAME1, Constant.MUSIC_FILE_NAME1, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME1)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME2, Constant.MUSIC_FILE_NAME2, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME2)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME3, Constant.MUSIC_FILE_NAME3, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME3)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME4, Constant.MUSIC_FILE_NAME4, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME4)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME5, Constant.MUSIC_FILE_NAME5, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME5)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME6, Constant.MUSIC_FILE_NAME6, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME6)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME7, Constant.MUSIC_FILE_NAME7, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME7)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME9, Constant.MUSIC_FILE_NAME9, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME9)));
+                musicList.add(new Paramter(Constant.MUSIC_NAME8, Constant.MUSIC_FILE_NAME8, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME8)));
+                musicList.add(new Paramter(Constant.MUSIC_FILE_NET, Constant.MUSIC_FILE_NAME_NET, Constant.MUSIC_FILE_PATH_NET));
+                filePath = musicList.get(0).getPath();
 //                pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
                 // meetyou.mp3 重采样文件 test.pcm 播放
 
@@ -322,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                     pcmFilePath = file.getAbsolutePath();
                     LogUtils.d("ffmpeg: file ", filePath + "\r\n pcmFilePath: " + pcmFilePath);
                 } else {
-                    pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, "mydream.pcm");
+                    pcmFilePath = FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME7);
                 }
             }
         });
@@ -350,11 +384,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLoad(boolean isLoad) {
-//                if (isLoad) {
-//                    LogUtils.d("ffmpeg: 加载中");
-//                } else {
-//                    LogUtils.d("ffmpeg: 播放中");
-//                }
+                if (isLoad) {
+                    LogUtils.d("ffmpeg: 加载中");
+                } else {
+                    LogUtils.d("ffmpeg: 播放中");
+                }
             }
 
             @Override
@@ -377,6 +411,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         // 播放时间
                         tv_time_call.setText(String.format("%d:%d", timeInfoModel.getCurrentTime(), timeInfoModel.getTotalTime()));
+                        seekbar_time.setProgress((int) (timeInfoModel.getCurrentTime() * 100.0f / timeInfoModel.getTotalTime()));
                     }
                 });
             }
@@ -433,6 +468,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        jniSdk.setIFFmpegCutAudioListener(new IFFmpegCutAudioListener() {
+            @Override
+            public void cutAudio(int sampleRate, byte[] buffer) {
+                LogUtils.d(TAG, "cutAudio sampleRate: " + sampleRate);
+                // 将返回的 pcm 数据存储
+            }
+        });
+
+        function = new Function<Paramter>() {
+            @Override
+            public void action(Paramter var1) {
+                if (dialogUtils != null) {
+                    dialogUtils.onDismiss();
+                }
+                if (var1 != null) {
+                    jniSdk.stopRecord();
+                    jniSdk.n_stop();
+                    filePath = var1.getPath();
+                    parpared();
+                }
+            }
+        };
         XXPermissionsUtils.getInstances().hasReadAndWritePermission(new Function<Boolean>() {
             @Override
             public void action(Boolean var) {
@@ -444,14 +501,16 @@ public class MainActivity extends AppCompatActivity {
     public void parpared() {
         // https 的链接端口无法识别
         //       ` jniSdk.callOnLoad(true);`
-        String url;
-        if (tv_source_change.isSelected()) {
-            url = Constant.AUDIO_PATH;
-        } else {
-            url = filePath;
+//        String url;
+//        if (tv_source_change.isSelected()) {
+//            url = Constant.AUDIO_PATH;
+//        } else {
+//            url = filePath;
+//        }
+        if (!TextUtils.isEmpty(filePath)) {
+            jniSdk.setSource(filePath);
+            jniSdk.parpared();
         }
-        jniSdk.setSource(url);
-        jniSdk.parpared();
     }
 
 }
