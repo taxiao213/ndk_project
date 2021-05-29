@@ -90,46 +90,29 @@ void TXFFmpeg::decodedFFmpegThread() {
                 duration = pAudio->duration;
             }
             SDK_LOG_D("pAudio != NULL ");
+        } else if (pContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            if (pVideo == NULL) {
+                SDK_LOG_D("pVideo == NULL ");
+                pVideo = new TXVideo(playStatus, callJava);
+                pVideo->streamVideoIndex = i;
+                pVideo->avCodecParameters = pContext->streams[i]->codecpar;
+                pVideo->time_base = pContext->streams[i]->time_base;
+            }
+            SDK_LOG_D("pVideo == NULL ");
         }
     }
-    // 获取解码器
-    AVCodec *pCodec = avcodec_find_decoder(pAudio->codecpar->codec_id);
-    if (!pCodec) {
-        SDK_LOG_D("avcodec_find_decoder error");
-        exit = true;
-        pthread_mutex_unlock(&initMutex);
-        if (callJava != NULL) {
-            callJava->onError(CHILD_THREAD, ERROR_CODE3, ERROR_MSG3);
-        }
-        return;
+    if (pAudio != NULL) {
+        getCodecContext(pAudio->codecpar, &pAudio->pCodecContext);
     }
 
-    // 获取解码器上下文
-    pAudio->pCodecContext = avcodec_alloc_context3(pCodec);
-    if (!pAudio) {
-        SDK_LOG_D("avcodec_alloc_context3 error");
-        exit = true;
-        pthread_mutex_unlock(&initMutex);
-        return;
+    if (pVideo != NULL) {
+        getCodecContext(pVideo->avCodecParameters, &pVideo->avCodecContext);
     }
-
-    if (avcodec_parameters_to_context(pAudio->pCodecContext, pAudio->codecpar) < 0) {
-        SDK_LOG_D("avcodec_parameters_to_context error");
+    if (playStatus != NULL && !playStatus->exit) {
+        this->callJava->onParpared(CHILD_THREAD);
+    } else {
         exit = true;
-        pthread_mutex_unlock(&initMutex);
-        return;
     }
-
-    if (avcodec_open2(pAudio->pCodecContext, pCodec, 0) != 0) {
-        SDK_LOG_D("avcodec_open2 error");
-        exit = true;
-        pthread_mutex_unlock(&initMutex);
-        if (callJava != NULL) {
-            callJava->onError(CHILD_THREAD, ERROR_CODE4, ERROR_MSG4);
-        }
-        return;
-    }
-    this->callJava->onParpared(CHILD_THREAD);
     pthread_mutex_unlock(&initMutex);
 }
 
@@ -140,6 +123,7 @@ void TXFFmpeg::start() {
     }
     int count = 0;
     pAudio->play();
+    pVideo->play();
     while (playStatus != NULL && !playStatus->exit) {
 
         if (playStatus->seek) {
@@ -162,6 +146,9 @@ void TXFFmpeg::start() {
 //                av_packet_free(&pPacket);
 //                av_free(pPacket);
 //                pPacket = NULL;
+            } else if (pPacket->stream_index == pVideo->streamVideoIndex) {
+                SDK_LOG_D("获取到视频流", count);
+                pVideo->txQueue->putAvpacket(pPacket);
             } else {
                 av_packet_free(&pPacket);
                 av_free(pPacket);
@@ -225,6 +212,12 @@ void TXFFmpeg::release() {
         pAudio = NULL;
     }
     SDK_LOG_D("release pAudio");
+    if (pVideo != NULL) {
+        pVideo->release();
+        delete (pVideo);
+        pVideo = NULL;
+    }
+    SDK_LOG_D("release pVideo");
     if (pContext != NULL) {
         avformat_close_input(&pContext);
         avformat_free_context(pContext);
@@ -329,6 +322,49 @@ void TXFFmpeg::cutAudio(jint startTime, jint endTime, jboolean isShowPcm, const 
             pAudio->cutFile = cutFile;
         }
     }
+}
+
+int
+TXFFmpeg::getCodecContext(AVCodecParameters *avCodecParameters, AVCodecContext **avCodecContext) {
+    // 获取解码器
+    AVCodec *pCodec = avcodec_find_decoder(avCodecParameters->codec_id);
+    if (!pCodec) {
+        SDK_LOG_D("avcodec_find_decoder error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
+        if (callJava != NULL) {
+            callJava->onError(CHILD_THREAD, ERROR_CODE3, ERROR_MSG3);
+        }
+        return -1;
+    }
+
+    // 获取解码器上下文
+    *avCodecContext = avcodec_alloc_context3(pCodec);
+
+//    if (!pAudio) {
+//        SDK_LOG_D("avcodec_alloc_context3 error");
+//        exit = true;
+//        pthread_mutex_unlock(&initMutex);
+//        return -1;
+//    }
+
+    if (avcodec_parameters_to_context(*avCodecContext, avCodecParameters) < 0) {
+        SDK_LOG_D("avcodec_parameters_to_context error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
+        return -1;
+    }
+
+    if (avcodec_open2(*avCodecContext, pCodec, 0) != 0) {
+        SDK_LOG_D("avcodec_open2 error");
+        exit = true;
+        pthread_mutex_unlock(&initMutex);
+        if (callJava != NULL) {
+            callJava->onError(CHILD_THREAD, ERROR_CODE4, ERROR_MSG4);
+        }
+        return -1;
+    }
+    return 0;
 }
 
 

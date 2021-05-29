@@ -439,7 +439,7 @@ void TXAudio::initOpenSLES() {
     // configure audio sink
     SLDataLocator_OutputMix outputMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
 
-    // 7.创建播放器 SLDataLocator_AndroidBufferQueue 会报错
+    // 7.创建播放器 SLDataLocator_AndroidBufferQueue 会报错 配置 PCM 格式信息
     SLDataLocator_AndroidSimpleBufferQueue androidBufferQueue = {
             SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
     SLDataFormat_PCM pcm = {

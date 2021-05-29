@@ -1,5 +1,6 @@
 package com.taxiao.cn.apple;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_valume;
     private TextView tv_valume_db;
     private TextView tv_record_time;
+    private SeekBar seekbar_time;
 
     private JniSdkImpl jniSdk;
     private ExecutorService executorService;
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Paramter> musicList = new ArrayList<>();
     private Function<Paramter> function;
     private DialogUtils dialogUtils;
-    private SeekBar seekbar_time;
+    private boolean isSeek = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_audio_stop = findViewById(R.id.tv_audio_stop);
         tv_record_time = findViewById(R.id.tv_record_time);
         TextView tv_cut = findViewById(R.id.tv_cut);
+        TextView tv_opengles = findViewById(R.id.tv_opengles);
 
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
@@ -244,20 +247,29 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        tv_opengles.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, OpenGLESActivity.class));
+            }
+        });
+
         seekbar_time.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 LogUtils.d(TAG, "seekbar_time process : " + progress);
                 seekProgress = progress;
+
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                LogUtils.d(TAG, "seekbar_time onStartTrackingTouch");
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                LogUtils.d(TAG, "seekbar_time onStopTrackingTouch");
                 jniSdk.n_seek(seekProgress);
             }
         });
@@ -284,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
         seekbar_pitch.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                LogUtils.d(TAG, "seekbar_time process : " + progress);
+                LogUtils.d(TAG, "seekbar_pitch process : " + progress);
                 pitchProgress = progress / Constant.PITCH_COEFFICIENT;
                 tv_pitch.setText(getString(R.string.audio_pitch, String.valueOf(pitchProgress)));
             }
@@ -303,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
         seekbar_speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                LogUtils.d(TAG, "seekbar_time process : " + progress);
+                LogUtils.d(TAG, "seekbar_speed process : " + progress);
                 speedProgress = progress / Constant.SPEED_COEFFICIENT;
                 tv_speed.setText(getString(R.string.audio_speed, String.valueOf(speedProgress)));
             }
@@ -337,6 +349,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 // todo 将音乐文件放到 assets 目录下,支持.ape , .wav , .mp3 , .flac , .aac 等格式
+                musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME10)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME1, Constant.MUSIC_FILE_NAME1, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME1)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME2, Constant.MUSIC_FILE_NAME2, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME2)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME3, Constant.MUSIC_FILE_NAME3, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME3)));

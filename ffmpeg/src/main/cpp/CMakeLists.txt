@@ -69,6 +69,7 @@ add_library(
         TXPcmBean.cpp
         test/thread_test.cpp
         test/Opensles_test.cpp
+        TXVideo.cpp
 )
 
 target_link_libraries(

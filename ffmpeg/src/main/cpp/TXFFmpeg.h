@@ -6,6 +6,7 @@
 #include "string.h"
 #include "TXAudio.h"
 #include "TXError.h"
+#include "TXVideo.h"
 
 #ifndef APPLE_TXFFMPEG_H
 #define APPLE_TXFFMPEG_H
@@ -23,6 +24,7 @@ public:
     const char *url = NULL;
     AVFormatContext *pContext = NULL;
     TXAudio *pAudio = NULL;
+    TXVideo *pVideo = NULL;
     TXPlayStatus *playStatus = NULL;
     pthread_mutex_t initMutex;
     bool exit = false;
@@ -66,6 +68,8 @@ public:
     jint getSampleRate();
 
     void cutAudio(jint startTime, jint endTime, jboolean isShowPcm, const char *url);
+
+    int getCodecContext(AVCodecParameters *avCodecParameters, AVCodecContext **avCodecContext);
 };
 
 

@@ -20,6 +20,7 @@ public class Constant {
     public static String MUSIC_FILE_NAME7 = "mydream.pcm";
     public static String MUSIC_FILE_NAME8 = "dream.aac";
     public static String MUSIC_FILE_NAME9 = "meetyou.mp3";
+    public static String MUSIC_FILE_NAME10 = "axure.mp4";
 
     public static String MUSIC_NAME1 = "刘惜君-王赫野-大风吹 (Live).flac";
     public static String MUSIC_NAME2 = "崔健-花房姑娘.ape";
@@ -30,6 +31,7 @@ public class Constant {
     public static String MUSIC_NAME7 = "mydream.pcm";
     public static String MUSIC_NAME8 = "dream.aac";
     public static String MUSIC_NAME9 = "meetyou.mp3";
+    public static String MUSIC_NAME10 = "axure.mp4";
 
     public static float INIT_SPEED_COEFFICIENT = 1.0f;
     public static float INIT_PITCH_COEFFICIENT = 1.0f;
