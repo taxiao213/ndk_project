@@ -74,7 +74,70 @@ void *playVideo(void *data) {
                     continue;
                 }
                 SDK_LOG_D("video  解码 avframe 成功");
+                if (pFrame->format == AV_PIX_FMT_YUV420P) {
+                    // 直接渲染
+                    SDK_LOG_D("video 格式 YUV420P");
+                    if (txVideo->txCallJava != NULL) {
+                        // 回调
+                        SDK_LOG_D("video txCallJava->onCallOnRenderYUV");
+                        txVideo->txCallJava->onCallOnRenderYUV(CHILD_THREAD,
+                                                               txVideo->avCodecContext->width,
+                                                               txVideo->avCodecContext->height,
+                                                               pFrame->data[0], pFrame->data[1],
+                                                               pFrame->data[2]);
+                    }
 
+                } else {
+                    // 转成格式为 YUV420P 格式
+                    SDK_LOG_D("video 转成格式为 YUV420P 格式");
+                    // 申请空间
+                    AVFrame *pFrame420P = av_frame_alloc();
+                    // 获取 buffer
+                    int num = av_image_get_buffer_size(AV_PIX_FMT_YUV420P,
+                                                       txVideo->avCodecContext->width,
+                                                       txVideo->avCodecContext->height, 1);
+                    uint8_t *buffer = reinterpret_cast<uint8_t *>(av_malloc(num * sizeof(uint8_t)));
+                    // 数据填充
+                    av_image_fill_arrays(pFrame420P->data, pFrame420P->linesize, buffer,
+                                         AV_PIX_FMT_YUV420P, txVideo->avCodecContext->width,
+                                         txVideo->avCodecContext->height, 1);
+                    // 转换格式为 YUV420P
+                    SwsContext *swsContext = sws_getContext(txVideo->avCodecContext->width,
+                                                            txVideo->avCodecContext->height,
+                                                            txVideo->avCodecContext->pix_fmt,
+                                                            txVideo->avCodecContext->width,
+                                                            txVideo->avCodecContext->height,
+                                                            AV_PIX_FMT_YUV420P, SWS_BICUBIC,
+                                                            NULL, NULL, NULL);
+                    if (!swsContext) {
+                        av_frame_free(&pFrame420P);
+                        av_free(pFrame420P);
+                        pFrame420P = NULL;
+                        av_free(buffer);
+                        buffer = NULL;
+                        continue;
+                    }
+                    sws_scale(swsContext, pFrame->data,
+                              pFrame->linesize, 0, pFrame->height,
+                              pFrame420P->data, pFrame420P->linesize);
+                    // 已经转换成YUV420P,直接渲染
+                    if (txVideo->txCallJava != NULL) {
+                        SDK_LOG_D("video txCallJava->onCallOnRenderYUV");
+                        txVideo->txCallJava->onCallOnRenderYUV(CHILD_THREAD,
+                                                               txVideo->avCodecContext->width,
+                                                               txVideo->avCodecContext->height,
+                                                               pFrame420P->data[0],
+                                                               pFrame420P->data[1],
+                                                               pFrame420P->data[2]);
+                    }
+                    av_frame_free(&pFrame420P);
+                    av_free(pFrame420P);
+                    pFrame420P = NULL;
+                    av_free(buffer);
+                    buffer = NULL;
+                    sws_freeContext(swsContext);
+                    swsContext = NULL;
+                }
                 av_frame_free(&pFrame);
                 av_free(pFrame);
                 pFrame = NULL;

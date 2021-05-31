@@ -20,11 +20,16 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodIdPcmAAc = jniEnv->GetMethodID(aClass, JAVA_METHOD_PCM_AAC, "(I[B)V");
         jmethodIdRecordTime = jniEnv->GetMethodID(aClass, JAVA_METHOD_RECORD_TIME, "(F)V");
         jmethodIdCutAudio = jniEnv->GetMethodID(aClass, JAVA_METHOD_CUT_AUDIO, "(I[B)V");
+        jmethodIdRenderYUV = jniEnv->GetMethodID(aClass, JAVA_METHOD_RENDER_YUV, "(II[B[B[B)V");
     }
 }
 
 TXCallJava::~TXCallJava() {
-
+    if (jniEnv != NULL) {
+        jniEnv->DeleteGlobalRef(job);
+        job = NULL;
+        jniEnv = NULL;
+    }
 }
 
 void TXCallJava::onParpared(int type) {
@@ -165,5 +170,48 @@ void TXCallJava::onCallOnCutAudio(int type, int sampleRate, int size, void *pcmB
         env->DeleteLocalRef(pArray);
         javaVm->DetachCurrentThread();
     }
+}
+
+void TXCallJava::onCallOnRenderYUV(int type, int width, int height, void *y, void *u, void *v) {
+    if (type == MAIN_THREAD) {
+        // YUV  4:1:1
+        int size = width * height;
+        jbyteArray byteArrayY = jniEnv->NewByteArray(size);
+        jniEnv->SetByteArrayRegion(byteArrayY, 0, size, static_cast<const jbyte *>(y));
+
+        jbyteArray byteArrayU = jniEnv->NewByteArray(size / 4);
+        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(u));
+
+        jbyteArray byteArrayV = jniEnv->NewByteArray(size / 4);
+        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(v));
+
+        jniEnv->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
+                               byteArrayV);
+        jniEnv->DeleteLocalRef(byteArrayY);
+        jniEnv->DeleteLocalRef(byteArrayU);
+        jniEnv->DeleteLocalRef(byteArrayV);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if ((javaVm->AttachCurrentThread(&env, 0)) != JNI_OK) {
+            return;
+        }
+        int size = width * height;
+        jbyteArray byteArrayY = env->NewByteArray(size);
+        env->SetByteArrayRegion(byteArrayY, 0, size, static_cast<const jbyte *>(y));
+
+        jbyteArray byteArrayU = env->NewByteArray(size / 4);
+        env->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(u));
+
+        jbyteArray byteArrayV = env->NewByteArray(size / 4);
+        env->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(v));
+
+        env->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
+                            byteArrayV);
+        env->DeleteLocalRef(byteArrayY);
+        env->DeleteLocalRef(byteArrayU);
+        env->DeleteLocalRef(byteArrayV);
+        javaVm->DetachCurrentThread();
+    }
+
 }
 

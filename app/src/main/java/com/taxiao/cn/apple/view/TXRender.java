@@ -23,11 +23,29 @@ import javax.microedition.khronos.opengles.GL10;
 public class TXRender implements GLSurfaceView.Renderer {
 
     private Context mContext;
-    // 顶点坐标
+    // 顶点坐标 绘制三角形
     private float[] vertex = {
             -1.0f, 0f,
             0f, 1.0f,
             1.0f, 0f
+    };
+
+    // 顶点坐标 绘制四角形 6 个点
+    private float[] vertex2 = {
+            -1.0f, 0f,
+            0f, 1.0f,
+            1.0f, 0f,
+            -1.0f, 0f,
+            1.0f, 0f,
+            0f, -1f
+    };
+
+    // 顶点坐标 绘制四角形 4 个点
+    private float[] vertex3 = {
+            -1.0f, 0f,
+            0f, -1f,
+            0f, 1f,
+            1f, 0f
     };
 
     // floatbuffer 申请内存空间
@@ -35,19 +53,36 @@ public class TXRender implements GLSurfaceView.Renderer {
     private int program;
     private int av_position;
     private int af_potion;
+    private int quadrilateralType = 2;// 0 三角形(3点绘制)   1 四边形(6点绘制)  2 四边形(4点绘制)
 
     public TXRender(Context context) {
         this.mContext = context;
+        // floatbuffer 申请内存空间
         // 4：float 占用的字节数
-        vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
-                // 对齐方式 有两种 BIG_ENDIAN  LITTLE_ENDIAN  nativeOrder 和本地机器一样
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                // 映射顶点坐标
-                .put(vertex);
+        if (quadrilateralType == 0) {
+            // 绘制三角形 Buffer
+            vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
+                    // 对齐方式 有两种 BIG_ENDIAN  LITTLE_ENDIAN  nativeOrder 和本地机器一样
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer()
+                    // 映射顶点坐标
+                    .put(vertex);
+        } else if (quadrilateralType == 1) {
+            // 绘制四边形 Buffer
+            vertexBuffer = ByteBuffer.allocateDirect(vertex2.length * 4)
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer()
+                    .put(vertex2);
+        } else if (quadrilateralType == 2) {
+            // 绘制四边形 Buffer
+            vertexBuffer = ByteBuffer.allocateDirect(vertex3.length * 4)
+                    // 对齐方式 有两种 BIG_ENDIAN  LITTLE_ENDIAN  nativeOrder 和本地机器一样
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer()
+                    // 映射顶点坐标
+                    .put(vertex3);
+        }
         vertexBuffer.position(0);
-
-
     }
 
     @Override
@@ -85,7 +120,17 @@ public class TXRender implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(av_position, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer);
         // 12.片元着色器赋值 代表红绿蓝，透明度的归一化值 x:red y:green z:blue w:alpha
         GLES20.glUniform4f(af_potion, 0, 0, 1, 1f);
-        // 13.绘制三角形
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
+        if (quadrilateralType == 0) {
+            // 13.绘制三角形
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
+        } else if (quadrilateralType == 1) {
+            // 13.绘制四边形
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+        } else if (quadrilateralType == 2) {
+            // 13.绘制四边形
+//            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            // 13.绘制三角形
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 1, 3);
+        }
     }
 }

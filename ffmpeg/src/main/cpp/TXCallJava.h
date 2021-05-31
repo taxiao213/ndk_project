@@ -16,6 +16,7 @@
 #define JAVA_METHOD_PCM_AAC "callOnPcmTAAc"
 #define JAVA_METHOD_RECORD_TIME "callOnRecordTime"
 #define JAVA_METHOD_CUT_AUDIO "callOnCutAudio"
+#define JAVA_METHOD_RENDER_YUV "callOnRenderYUV"
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -33,6 +34,7 @@ public:
     jmethodID jmethodIdPcmAAc;
     jmethodID jmethodIdRecordTime;
     jmethodID jmethodIdCutAudio;
+    jmethodID jmethodIdRenderYUV;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -56,6 +58,8 @@ public:
     void onCallOnRecordTime(int type, float time);
 
     void onCallOnCutAudio(int type, int sampleRate, int size, void *pcmBuffer);
+
+    void onCallOnRenderYUV(int type, int width, int height, void *y, void *u, void *v);
 };
 
 

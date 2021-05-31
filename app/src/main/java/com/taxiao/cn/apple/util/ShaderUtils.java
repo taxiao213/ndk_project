@@ -54,6 +54,12 @@ public class ShaderUtils {
         return stringBuffer.toString();
     }
 
+    /**
+     * 读取 shader
+     * @param shaderType
+     * @param source
+     * @return
+     */
     public static int loadShader(int shaderType, String source) {
         // 1.创建shader
         int shader = GLES20.glCreateShader(shaderType);

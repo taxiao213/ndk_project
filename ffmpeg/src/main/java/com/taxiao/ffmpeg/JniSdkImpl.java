@@ -267,6 +267,10 @@ public class JniSdkImpl {
         }
     }
 
+    public void callOnRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
+        Log.d(TAG, "获取到视频的yuv数据");
+    }
+
     public interface MyCallBack {
         void error(int code, String name);
 

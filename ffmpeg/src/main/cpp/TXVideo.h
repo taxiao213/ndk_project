@@ -8,6 +8,12 @@
 #include "TXCallJava.h"
 #include "TXQueue.h"
 #include "TXAudio.h"
+
+extern "C" {
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
+};
+
 class TXVideo {
 public:
     int streamVideoIndex = -1;
