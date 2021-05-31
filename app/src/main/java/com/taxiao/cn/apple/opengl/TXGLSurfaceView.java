@@ -1,10 +1,11 @@
-package com.taxiao.cn.apple.view;
+package com.taxiao.cn.apple.opengl;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 
 /**
+ * 绘制三角形 四边形
  * Created by hanqq on 2021/5/29
  * Email:yin13753884368@163.com
  * CSDN:http://blog.csdn.net/yin13753884368/article

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
+import com.taxiao.ffmpeg.utils.IFFmpegDecodeVideoListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
@@ -59,9 +60,11 @@ public class JniSdkImpl {
     private IFFmpegValumeDBListener iffmpegValumeDBListener;
     private IFFmpegRecordTimeListener iffmpegRecordTimeListener;
     private IFFmpegCutAudioListener iffmpegCutAudioListener;
+    private IFFmpegDecodeVideoListener iffmpegDecodeVideoListener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
     private static int volumePercent = 100;
+
 
     public JniSdkImpl() {
         executorService = Executors.newSingleThreadExecutor();
@@ -97,6 +100,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegCutAudioListener(IFFmpegCutAudioListener fFmpegCutAudioListener) {
         this.iffmpegCutAudioListener = fFmpegCutAudioListener;
+    }
+
+    public void setIFFmpegDecodeVideoListener(IFFmpegDecodeVideoListener fFmpegDecodeVideoListener) {
+        this.iffmpegDecodeVideoListener = fFmpegDecodeVideoListener;
     }
 
     public void setSource(String filePath) {
@@ -268,7 +275,10 @@ public class JniSdkImpl {
     }
 
     public void callOnRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
-        Log.d(TAG, "获取到视频的yuv数据");
+        Log.d(TAG, "获取到视频的yuv数据, width: " + width + " height: " + height);
+        if (iffmpegDecodeVideoListener != null) {
+            iffmpegDecodeVideoListener.onRenderYUV(width, height, y, u, v);
+        }
     }
 
     public interface MyCallBack {

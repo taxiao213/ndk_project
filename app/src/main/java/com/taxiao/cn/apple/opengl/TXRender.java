@@ -1,4 +1,4 @@
-package com.taxiao.cn.apple.view;
+package com.taxiao.cn.apple.opengl;
 
 import android.content.Context;
 import android.opengl.GLES20;
@@ -93,7 +93,7 @@ public class TXRender implements GLSurfaceView.Renderer {
         if (program > 0) {
             // 9.得到着色器中的属性
             av_position = GLES20.glGetAttribLocation(program, "av_Position");
-            af_potion = GLES20.glGetUniformLocation(program, "af_Potion");
+            af_potion = GLES20.glGetUniformLocation(program, "af_Position");
         }
     }
 

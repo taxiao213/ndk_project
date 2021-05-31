@@ -1,12 +1,11 @@
 package com.taxiao.cn.apple;
 
 import android.os.Bundle;
-import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.taxiao.cn.apple.view.TXGLSurfaceView;
+import com.taxiao.cn.apple.opengl.TXGLSurfaceView;
 
 /**
  * Created by hanqq on 2021/5/29

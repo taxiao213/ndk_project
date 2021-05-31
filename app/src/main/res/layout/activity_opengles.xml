@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.taxiao.cn.apple.view.TXGLSurfaceView
+    <com.taxiao.cn.apple.opengl.TXGLSurfaceView
         android:id="@+id/gles"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

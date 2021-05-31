@@ -77,6 +77,12 @@
             android:text="ffmpeg test codec"
             android:textColor="@android:color/black" />
 
+        <com.taxiao.cn.apple.opengl.TXGLSurfaceVideoView
+            android:id="@+id/gles_video"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="10dp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"

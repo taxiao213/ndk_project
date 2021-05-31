@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.taxiao.cn.apple.model.Paramter;
+import com.taxiao.cn.apple.opengl.TXGLSurfaceVideoView;
 import com.taxiao.cn.apple.util.DialogUtils;
 import com.taxiao.cn.apple.util.FileUtils;
 import com.taxiao.cn.apple.util.LogUtils;
@@ -17,6 +18,7 @@ import com.taxiao.ffmpeg.JniSdkImpl;
 import com.taxiao.ffmpeg.utils.Function;
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
+import com.taxiao.ffmpeg.utils.IFFmpegDecodeVideoListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private Function<Paramter> function;
     private DialogUtils dialogUtils;
     private boolean isSeek = false;
+    private TXGLSurfaceVideoView gles_video;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         tv_record_time = findViewById(R.id.tv_record_time);
         TextView tv_cut = findViewById(R.id.tv_cut);
         TextView tv_opengles = findViewById(R.id.tv_opengles);
+        gles_video = findViewById(R.id.gles_video);
 
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
@@ -486,6 +490,13 @@ public class MainActivity extends AppCompatActivity {
             public void cutAudio(int sampleRate, byte[] buffer) {
                 LogUtils.d(TAG, "cutAudio sampleRate: " + sampleRate);
                 // 将返回的 pcm 数据存储
+            }
+        });
+
+        jniSdk.setIFFmpegDecodeVideoListener(new IFFmpegDecodeVideoListener() {
+            @Override
+            public void onRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
+                gles_video.setYUVData(width, height, y, u, v);
             }
         });
 
