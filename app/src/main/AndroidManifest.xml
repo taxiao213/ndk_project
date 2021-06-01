@@ -26,6 +26,7 @@
         </activity>
 
         <activity android:name=".OpenGLESActivity" />
+        <activity android:name=".OpenGLESImageActivity" />
     </application>
 
 </manifest>

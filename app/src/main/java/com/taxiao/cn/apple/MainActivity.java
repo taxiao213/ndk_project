@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.taxiao.cn.apple.model.Paramter;
+import com.taxiao.cn.apple.opengl.TXGLSurfaceImageView;
 import com.taxiao.cn.apple.opengl.TXGLSurfaceVideoView;
 import com.taxiao.cn.apple.util.DialogUtils;
 import com.taxiao.cn.apple.util.FileUtils;
@@ -104,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv_cut = findViewById(R.id.tv_cut);
         TextView tv_opengles = findViewById(R.id.tv_opengles);
         gles_video = findViewById(R.id.gles_video);
+        TextView tv_opengles_image = findViewById(R.id.tv_opengles_image);
 
         seekbar_pitch.setProgress((int) (pitchProgress * Constant.PITCH_COEFFICIENT));
         seekbar_speed.setProgress((int) (speedProgress * Constant.SPEED_COEFFICIENT));
@@ -255,6 +257,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, OpenGLESActivity.class));
+            }
+        });
+
+        tv_opengles_image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, OpenGLESImageActivity.class));
             }
         });
 

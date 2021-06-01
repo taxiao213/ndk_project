@@ -61,6 +61,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
 
     public TXVideoRender(Context context) {
         this.mContext = context;
+        // 1.创建顶点 和 纹理 buffer
         vetexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()
@@ -92,12 +93,14 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     }
 
     private void initRenderYUV() {
-        String vertexShader = ShaderUtils.readRawTxt(mContext, R.raw.vertex_shader1);
-        String fragmentShader = ShaderUtils.readRawTxt(mContext, R.raw.fragment_shader1);
+        // 2.加载 shader
+        String vertexShader = ShaderUtils.readRawTxt(mContext, R.raw.vertex_video_shader);
+        String fragmentShader = ShaderUtils.readRawTxt(mContext, R.raw.fragment_video_shader);
+        // 3.创建渲染程序
         program = ShaderUtils.createProgram(vertexShader, fragmentShader);
         LogUtils.d(TAG, "program " + program);
         if (program > 0) {
-            // 9.得到着色器中的属性
+            // 4.得到着色器中的属性
             av_position = GLES20.glGetAttribLocation(program, "av_Position");
             af_position = GLES20.glGetAttribLocation(program, "af_Position");
 
@@ -105,15 +108,15 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
             sampler_u = GLES20.glGetUniformLocation(program, "sampler_u");
             sampler_v = GLES20.glGetUniformLocation(program, "sampler_v");
             textureId_yuv = new int[3];
-            // 创建纹理
+            // 5.创建纹理
             GLES20.glGenTextures(3, textureId_yuv, 0);
             for (int i = 0; i < 3; i++) {
-                // 绑定纹理
+                // 6.绑定纹理
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[i]);
-                // 设置环绕和过滤方式 环绕（超出纹理坐标范围）：（s==x t==y GL_REPEAT 重复）
+                // 7.设置环绕和过滤方式 环绕（超出纹理坐标范围）：（s==x t==y GL_REPEAT 重复）
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
-                // 过滤（纹理像素映射到坐标点）：（缩小、放大：GL_LINEAR线性）
+                // 8.过滤（纹理像素映射到坐标点）：（缩小、放大：GL_LINEAR线性）
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
             }
@@ -122,15 +125,16 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
 
     private void renderYUV() {
         if (width_yuv > 0 && height_yuv > 0 && y != null && u != null && v != null /*&& program > 0*/) {
+            // 9.使用渲染器
             GLES20.glUseProgram(program);
-            // 11.使顶点属性数组有效
+            // 10.使顶点坐标和纹理坐标属性数组有效
             GLES20.glEnableVertexAttribArray(av_position);
             GLES20.glVertexAttribPointer(av_position, 2, GLES20.GL_FLOAT, false, 8, vetexBuffer);
 
             GLES20.glEnableVertexAttribArray(af_position);
             GLES20.glVertexAttribPointer(af_position, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
 
-            // 纹理赋值
+            // 11.纹理赋值
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[0]);
             // level 级别 border 边框
@@ -154,7 +158,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
             y = null;
             u = null;
             v = null;
-
+            // 12.绘制四边形
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         }
     }
