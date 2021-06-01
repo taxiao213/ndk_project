@@ -90,6 +90,9 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClearColor(0f, 0f, 0f, 1f);
         renderYUV();
+        // 12.绘制四边形
+        // renderYUV 判断条件后会导致闪屏
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 
     private void initRenderYUV() {
@@ -158,8 +161,6 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
             y = null;
             u = null;
             v = null;
-            // 12.绘制四边形
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         }
     }
 

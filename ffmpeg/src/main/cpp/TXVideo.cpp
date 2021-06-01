@@ -74,6 +74,11 @@ void *playVideo(void *data) {
                     continue;
                 }
                 SDK_LOG_D("video  解码 avframe 成功");
+                double diffTime = txVideo->getFrameDiffTime(pFrame);
+                SDK_LOG_D("video  diffTime1 %f ", diffTime);
+                double delayTime = txVideo->getDelayTime(diffTime);
+                av_usleep(delayTime);
+                SDK_LOG_D("video  diffTime2 %f ", delayTime);
                 if (pFrame->format == AV_PIX_FMT_YUV420P) {
                     // 直接渲染
                     SDK_LOG_D("video 格式 YUV420P");
@@ -175,4 +180,46 @@ void TXVideo::release() {
         delete (txQueue);
         txQueue = NULL;
     }
+}
+
+/**
+ * 音视频同步  以音频为主
+ * @param avFrame
+ * @return
+ */
+double TXVideo::getFrameDiffTime(AVFrame *avFrame) {
+    double pts = av_frame_get_best_effort_timestamp(avFrame);
+    if (pts == AV_NOPTS_VALUE) {
+        pts = 0;
+    }
+    //分别获取音频和视频的PTS（播放时间戳）
+    pts *= av_q2d(time_base);
+    if (pts > 0) {
+        clock = pts;
+    }
+    double diff = txAudio->clock - clock;
+    return diff;
+}
+
+// 计算延迟时间
+double TXVideo::getDelayTime(double diff) {
+    // 音频快
+    if (diff > 0.003) {
+        delayTime = delayTime * 2 / 3;
+
+    } else if (diff < -0.003) {
+        // 视频快
+        delayTime = delayTime * 3 / 2;
+    } else if (diff == 0.003) {
+
+    }
+    if (diff >= 0.5) {
+        delayTime = 0;
+    } else if (diff <= -0.5) {
+        delayTime = defaultDelayTime * 2;
+    }
+    if (fabs(diff) >= 10) {
+        delayTime = defaultDelayTime;
+    }
+    return delayTime;
 }

@@ -24,6 +24,10 @@ public:
     TXQueue *txQueue = NULL;
     AVRational time_base;
     pthread_t pthread;
+    TXAudio *txAudio;
+    double clock = 0;
+    double delayTime = 0;
+    double defaultDelayTime = 0;
 public:
     TXVideo(TXPlayStatus *playStatus, TXCallJava *callJava);
 
@@ -32,6 +36,10 @@ public:
     void play();
 
     void release();
+
+    double getFrameDiffTime(AVFrame *avFrame);
+
+    double getDelayTime(double diff);
 };
 
 

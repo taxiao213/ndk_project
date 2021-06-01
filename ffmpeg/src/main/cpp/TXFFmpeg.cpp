@@ -97,6 +97,14 @@ void TXFFmpeg::decodedFFmpegThread() {
                 pVideo->streamVideoIndex = i;
                 pVideo->avCodecParameters = pContext->streams[i]->codecpar;
                 pVideo->time_base = pContext->streams[i]->time_base;
+                // 获取帧率 30 pVideo fps 30, defaultDelayTime: 0.033333
+                int num = pContext->streams[i]->avg_frame_rate.num;
+                int den = pContext->streams[i]->avg_frame_rate.den;
+                if (num != 0 && den != 0) {
+                    int fps = num / den; // 帧率
+                    pVideo->defaultDelayTime = 1.0 / fps;
+                    SDK_LOG_D("pVideo fps %d, defaultDelayTime: %f", fps, pVideo->defaultDelayTime);
+                }
             }
             SDK_LOG_D("pVideo == NULL ");
         }
@@ -118,24 +126,29 @@ void TXFFmpeg::decodedFFmpegThread() {
 
 void TXFFmpeg::start() {
     if (pAudio == NULL) {
-        SDK_LOG_D("start error");
+        SDK_LOG_D("start pAudio == NULL");
         return;
     }
+    if (pVideo == NULL) {
+        SDK_LOG_D("start pVideo==NULL");
+        return;
+    }
+    pVideo->txAudio = pAudio;
     int count = 0;
     pAudio->play();
     pVideo->play();
     while (playStatus != NULL && !playStatus->exit) {
-
         if (playStatus->seek) {
             // 循环的地方 加睡眠,降低 CPU 使用率
             av_usleep(SLEEP_TIME);
             continue;
         }
 
-        if (pAudio->queue->getQueueSize() > 40) {
-            av_usleep(SLEEP_TIME);
-            continue;
-        }
+// 解决视频卡的问题
+//        if (pAudio->queue->getQueueSize() > 40) {
+//            av_usleep(SLEEP_TIME);
+//            continue;
+//        }
         AVPacket *pPacket = av_packet_alloc();
         int readFrame = av_read_frame(pContext, pPacket);
         if (readFrame == 0) {

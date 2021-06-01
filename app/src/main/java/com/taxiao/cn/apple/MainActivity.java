@@ -363,6 +363,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 // todo 将音乐文件放到 assets 目录下,支持.ape , .wav , .mp3 , .flac , .aac 等格式
                 musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME10)));
+                musicList.add(new Paramter(Constant.MUSIC_NAME11, Constant.MUSIC_FILE_NAME11, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME11)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME1, Constant.MUSIC_FILE_NAME1, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME1)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME2, Constant.MUSIC_FILE_NAME2, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME2)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME3, Constant.MUSIC_FILE_NAME3, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME3)));
