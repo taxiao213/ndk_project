@@ -138,7 +138,9 @@ void TXFFmpeg::start() {
     pAudio->play();
     pVideo->play();
     while (playStatus != NULL && !playStatus->exit) {
+        SDK_LOG_D("start 循环 ");
         if (playStatus->seek) {
+            SDK_LOG_D("start seek ");
             // 循环的地方 加睡眠,降低 CPU 使用率
             av_usleep(SLEEP_TIME);
             continue;
@@ -179,7 +181,10 @@ void TXFFmpeg::start() {
                     av_usleep(SLEEP_TIME);
                     continue;
                 } else {
-                    playStatus->exit = true;
+                    if (!playStatus->seek) {
+                        av_usleep(SLEEP_TIME);
+                        playStatus->exit = true;
+                    }
                     break;
                 }
             }
@@ -197,11 +202,17 @@ void TXFFmpeg::resume() {
     if (pAudio != NULL) {
         pAudio->resume();
     }
+    if (pVideo != NULL) {
+        pVideo->resume();
+    }
 }
 
 void TXFFmpeg::pause() {
     if (pAudio != NULL) {
         pAudio->pause();
+    }
+    if (pVideo != NULL) {
+        pVideo->pause();
     }
 }
 
@@ -263,19 +274,31 @@ void TXFFmpeg::setSeek(int64_t seconds) {
         return;
     }
     if (seconds >= 0 && seconds <= duration) {
+        SDK_LOG_D("setSeek value :%d", seconds);
+        playStatus->seek = true;
+        pthread_mutex_lock(&seek_mutex);
+        int64_t rel = seconds * duration / 100 * AV_TIME_BASE;
+        avformat_seek_file(pContext, -1, INT64_MIN, rel, INT64_MAX, 0);
         if (pAudio != NULL) {
-            playStatus->seek = true;
             pAudio->queue->clearAvpacket();
             pAudio->clock = 0;
             pAudio->last_time = 0;
-            pthread_mutex_lock(&seek_mutex);
+            pthread_mutex_lock(&pAudio->pthreadMutex);
             // 清空残留的 avframe
             avcodec_flush_buffers(pAudio->pCodecContext);
-            int64_t rel = seconds * duration / 100 * AV_TIME_BASE;
-            avformat_seek_file(pContext, -1, INT64_MIN, rel, INT64_MAX, 0);
-            pthread_mutex_unlock(&seek_mutex);
-            playStatus->seek = false;
+            pthread_mutex_unlock(&pAudio->pthreadMutex);
         }
+
+        if (pVideo != NULL) {
+            pVideo->txQueue->clearAvpacket();
+            pVideo->clock = 0;
+            pthread_mutex_lock(&pVideo->pthreadMutex);
+            // 清空残留的 avframe
+            avcodec_flush_buffers(pVideo->avCodecContext);
+            pthread_mutex_unlock(&pVideo->pthreadMutex);
+        }
+        pthread_mutex_unlock(&seek_mutex);
+        playStatus->seek = false;
     }
 }
 

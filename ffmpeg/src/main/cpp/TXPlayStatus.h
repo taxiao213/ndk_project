@@ -11,6 +11,7 @@ public :
     bool exit;
     bool load;
     bool seek;
+    bool pause;
 public :
     TXPlayStatus();
 

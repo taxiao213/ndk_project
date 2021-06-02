@@ -25,6 +25,7 @@ public:
     AVRational time_base;
     pthread_t pthread;
     TXAudio *txAudio;
+    pthread_mutex_t pthreadMutex;
     double clock = 0;
     double delayTime = 0;
     double defaultDelayTime = 0;
@@ -40,6 +41,10 @@ public:
     double getFrameDiffTime(AVFrame *avFrame);
 
     double getDelayTime(double diff);
+
+    void resume();
+
+    void pause();
 };
 
 

@@ -8,10 +8,11 @@ TXVideo::TXVideo(TXPlayStatus *playStatus, TXCallJava *callJava) {
     this->txPlayStatus = playStatus;
     this->txCallJava = callJava;
     this->txQueue = new TXQueue(txPlayStatus);
+    pthread_mutex_init(&pthreadMutex, NULL);
 }
 
 TXVideo::~TXVideo() {
-
+    pthread_mutex_destroy(&pthreadMutex);
 }
 
 void *playVideo(void *data) {
@@ -23,6 +24,13 @@ void *playVideo(void *data) {
                 av_usleep(SLEEP_TIME);
                 continue;
             }
+
+            if (txVideo->txPlayStatus != NULL && txVideo->txPlayStatus->pause) {
+                SDK_LOG_D("video 正在pause");
+                av_usleep(SLEEP_TIME);
+                continue;
+            }
+
             if (txVideo->txQueue != NULL && txVideo->txQueue->getQueueSize() == 0) {
                 SDK_LOG_D("video 正在seek");
                 if (txVideo->txPlayStatus != NULL && !txVideo->txPlayStatus->load) {
@@ -52,12 +60,13 @@ void *playVideo(void *data) {
                     pPacket = NULL;
                     continue;
                 }
-
+                pthread_mutex_lock(&txVideo->pthreadMutex);
                 if (avcodec_send_packet(txVideo->avCodecContext, pPacket) != 0) {
                     SDK_LOG_D("video 0 on success, otherwise negative error code:");
                     av_packet_free(&pPacket);
                     av_free(pPacket);
                     pPacket = NULL;
+                    pthread_mutex_unlock(&txVideo->pthreadMutex);
                     continue;
                 }
 
@@ -71,6 +80,7 @@ void *playVideo(void *data) {
                     av_packet_free(&pPacket);
                     av_free(pPacket);
                     pPacket = NULL;
+                    pthread_mutex_unlock(&txVideo->pthreadMutex);
                     continue;
                 }
                 SDK_LOG_D("video  解码 avframe 成功");
@@ -120,6 +130,7 @@ void *playVideo(void *data) {
                         pFrame420P = NULL;
                         av_free(buffer);
                         buffer = NULL;
+                        pthread_mutex_unlock(&txVideo->pthreadMutex);
                         continue;
                     }
                     sws_scale(swsContext, pFrame->data,
@@ -150,6 +161,7 @@ void *playVideo(void *data) {
                 av_packet_free(&pPacket);
                 av_free(pPacket);
                 pPacket = NULL;
+                pthread_mutex_unlock(&txVideo->pthreadMutex);
             }
         }
         pthread_exit(&txVideo->pthread);
@@ -157,14 +169,23 @@ void *playVideo(void *data) {
 }
 
 void TXVideo::play() {
+    if (txPlayStatus != NULL) {
+        txPlayStatus->pause = false;
+    }
     pthread_create(&pthread, NULL, playVideo, this);
 }
 
 void TXVideo::release() {
+    if (txQueue != NULL) {
+        delete (txQueue);
+        txQueue = NULL;
+    }
     if (avCodecContext != NULL) {
+        pthread_mutex_lock(&pthreadMutex);
         avcodec_close(avCodecContext);
         avcodec_free_context(&avCodecContext);
         avCodecContext = NULL;
+        pthread_mutex_unlock(&pthreadMutex);
     }
     if (avCodecParameters != NULL) {
         avcodec_parameters_free(&avCodecParameters);
@@ -175,10 +196,6 @@ void TXVideo::release() {
     }
     if (txPlayStatus != NULL) {
         txPlayStatus = NULL;
-    }
-    if (txQueue != NULL) {
-        delete (txQueue);
-        txQueue = NULL;
     }
 }
 
@@ -222,4 +239,16 @@ double TXVideo::getDelayTime(double diff) {
         delayTime = defaultDelayTime;
     }
     return delayTime;
+}
+
+void TXVideo::resume() {
+    if (txPlayStatus != NULL) {
+        txPlayStatus->pause = false;
+    }
+}
+
+void TXVideo::pause() {
+    if (txPlayStatus != NULL) {
+        txPlayStatus->pause = true;
+    }
 }

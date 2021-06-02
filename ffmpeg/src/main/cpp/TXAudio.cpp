@@ -9,6 +9,8 @@ TXAudio::TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_
     this->playStatus = txPlayStatus;
     this->sample_rate = sample_rate;
     this->txCallJava = txCallJava;
+    pthread_mutex_init(&pthreadMutex, NULL);
+
     queue = new TXQueue(playStatus);
     buffer = (uint8_t *) (av_malloc(sample_rate * 2 * 2));
 
@@ -25,7 +27,7 @@ TXAudio::TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_
 }
 
 TXAudio::~TXAudio() {
-
+    pthread_mutex_destroy(&pthreadMutex);
 }
 
 // 音频分包机制
@@ -126,6 +128,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
             }
         }
         // .ape 文件一个 AVPacket 会有多个 AVFrame ,需要多次 avcodec_receive_frame 取出
+        pthread_mutex_lock(&pthreadMutex);
         if (readFrameFinished) {
             SDK_LOG_D("resampleAudio 获取数据");
             avPacket = av_packet_alloc();
@@ -133,6 +136,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 avPacket = NULL;
+                pthread_mutex_unlock(&pthreadMutex);
                 continue;
             }
             ret = avcodec_send_packet(pCodecContext, avPacket);
@@ -140,6 +144,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
                 av_packet_free(&avPacket);
                 av_free(avPacket);
                 avPacket = NULL;
+                pthread_mutex_unlock(&pthreadMutex);
                 continue;
             }
         }
@@ -177,6 +182,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
                     swrContext = NULL;
                 }
                 readFrameFinished = true;
+                pthread_mutex_unlock(&pthreadMutex);
                 continue;
             }
 
@@ -220,6 +226,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
             avFrame = NULL;
             swr_free(&swrContext);
             swrContext = NULL;
+            pthread_mutex_unlock(&pthreadMutex);
             break;
         } else {
             readFrameFinished = true;
@@ -229,6 +236,7 @@ int TXAudio::resampleAudio(void **pcmbuffer) {
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
+            pthread_mutex_unlock(&pthreadMutex);
             continue;
         }
     }

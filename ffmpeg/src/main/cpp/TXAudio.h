@@ -92,6 +92,8 @@ public:
     pthread_t pthreadBuffer;
     int defaultBufferSize = 4096;
 
+    pthread_mutex_t pthreadMutex;
+
 public:
     TXAudio(TXPlayStatus *txPlayStatus, TXCallJava *txCallJava, int sample_rate);
 
