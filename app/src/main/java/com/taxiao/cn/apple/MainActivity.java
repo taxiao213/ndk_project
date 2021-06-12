@@ -3,6 +3,7 @@ package com.taxiao.cn.apple;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Surface;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -21,6 +22,7 @@ import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
 import com.taxiao.ffmpeg.utils.IFFmpegDecodeVideoListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
+import com.taxiao.ffmpeg.utils.IFFmpegGLSurfaceListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
@@ -362,6 +364,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 // todo 将音乐文件放到 assets 目录下,支持.ape , .wav , .mp3 , .flac , .aac 等格式
+                musicList.add(new Paramter(Constant.MUSIC_NAME12, Constant.MUSIC_FILE_NAME12, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME12)));
+//                musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10,  "/storage/9016-4EF8/axure.mp4"));
+                musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10, "/storage/9016-4EF8/Android网易/Android音视频/13.OpenGL ES 绘制流程 着色器.mp4"));
+                musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10, "/storage/9016-4EF8/英语二/谢孟媛/帮謝孟媛老師PO初級文法第01集.mp4"));
                 musicList.add(new Paramter(Constant.MUSIC_NAME10, Constant.MUSIC_FILE_NAME10, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME10)));
                 musicList.add(new Paramter(Constant.MUSIC_NAME11, Constant.MUSIC_FILE_NAME11, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME11)));
 //                musicList.add(new Paramter(Constant.MUSIC_NAME1, Constant.MUSIC_FILE_NAME1, FileUtils.copyAssetAndWrite(MainActivity.this, Constant.MUSIC_FILE_NAME1)));
@@ -438,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         // 播放时间
                         tv_time_call.setText(String.format("%d:%d", timeInfoModel.getCurrentTime(), timeInfoModel.getTotalTime()));
-                        seekbar_time.setProgress((int) (timeInfoModel.getCurrentTime() * 100.0f / timeInfoModel.getTotalTime()));
+//                        seekbar_time.setProgress((int) (timeInfoModel.getCurrentTime() * 100.0f / timeInfoModel.getTotalTime()));
                     }
                 });
             }
@@ -506,7 +512,26 @@ public class MainActivity extends AppCompatActivity {
         jniSdk.setIFFmpegDecodeVideoListener(new IFFmpegDecodeVideoListener() {
             @Override
             public void onRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
-                gles_video.setYUVData(width, height, y, u, v);
+                if (gles_video != null) {
+                    gles_video.setYUVData(width, height, y, u, v);
+                }
+            }
+
+            @Override
+            public void renderType(boolean renderYUV) {
+                if (gles_video != null) {
+                    gles_video.setRenderType(renderYUV);
+                }
+            }
+        });
+
+        jniSdk.setFFmpegGLSurfaceListener(new IFFmpegGLSurfaceListener() {
+            @Override
+            public Surface getSurface() {
+                if (gles_video != null) {
+                    return gles_video.getSurface();
+                }
+                return null;
             }
         });
 

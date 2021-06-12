@@ -2,16 +2,20 @@ package com.taxiao.ffmpeg;
 
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Surface;
 
 import com.taxiao.ffmpeg.utils.IFFmpegCompleteListener;
 import com.taxiao.ffmpeg.utils.IFFmpegCutAudioListener;
 import com.taxiao.ffmpeg.utils.IFFmpegDecodeVideoListener;
 import com.taxiao.ffmpeg.utils.IFFmpegErrorListener;
+import com.taxiao.ffmpeg.utils.IFFmpegGLSurfaceListener;
 import com.taxiao.ffmpeg.utils.IFFmpegParparedListener;
 import com.taxiao.ffmpeg.utils.IFFmpegRecordTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegTimeListener;
 import com.taxiao.ffmpeg.utils.IFFmpegValumeDBListener;
+import com.taxiao.ffmpeg.utils.TXMediaCodecVideoUtil;
 import com.taxiao.ffmpeg.utils.TXMediacodecUtil;
+import com.taxiao.ffmpeg.utils.TXVideoSupportUitl;
 import com.taxiao.ffmpeg.utils.TimeInfoModel;
 
 import java.io.File;
@@ -61,6 +65,7 @@ public class JniSdkImpl {
     private IFFmpegRecordTimeListener iffmpegRecordTimeListener;
     private IFFmpegCutAudioListener iffmpegCutAudioListener;
     private IFFmpegDecodeVideoListener iffmpegDecodeVideoListener;
+    private IFFmpegGLSurfaceListener iffmpegGLSurfaceListener;
     private MyCallBack myCallBack;
     private static TimeInfoModel timeInfoModel;
     private static int volumePercent = 100;
@@ -104,6 +109,10 @@ public class JniSdkImpl {
 
     public void setIFFmpegDecodeVideoListener(IFFmpegDecodeVideoListener fFmpegDecodeVideoListener) {
         this.iffmpegDecodeVideoListener = fFmpegDecodeVideoListener;
+    }
+
+    public void setFFmpegGLSurfaceListener(IFFmpegGLSurfaceListener fFmpegGLSurfaceListener) {
+        this.iffmpegGLSurfaceListener = fFmpegGLSurfaceListener;
     }
 
     public void setSource(String filePath) {
@@ -161,13 +170,20 @@ public class JniSdkImpl {
 
     // 停止录音
     public void stopRecord() {
-        TXMediacodecUtil.getInstance().destroy();
+        TXMediacodecUtil.getInstance().release();
         n_stopRecord();
     }
 
     public void cutAudio(int startTime, int endTime, boolean isShowPcm, String cutPath) {
         n_cutAudio(startTime, endTime, isShowPcm, cutPath);
     }
+
+    public void stop() {
+        TXMediaCodecVideoUtil.getInstance().release();
+        TXMediacodecUtil.getInstance().release();
+        n_stop();
+    }
+
     // -------------------------   c++ 回调函数 --------------------------------------
 
     /**
@@ -236,14 +252,14 @@ public class JniSdkImpl {
         if (iffmpegerrorlistener != null) {
             iffmpegerrorlistener.error(code, name);
         }
-        n_stop();
+        stop();
     }
 
     /**
      * 播放完成的回调
      */
     public void callOnComplete() {
-        n_stop();
+        stop();
         if (iffmpegcompletelistener != null) {
             iffmpegcompletelistener.complete();
         }
@@ -277,8 +293,38 @@ public class JniSdkImpl {
     public void callOnRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v) {
         Log.d(TAG, "获取到视频的yuv数据, width: " + width + " height: " + height);
         if (iffmpegDecodeVideoListener != null) {
+            iffmpegDecodeVideoListener.renderType(true);
             iffmpegDecodeVideoListener.onRenderYUV(width, height, y, u, v);
         }
+    }
+
+    public boolean callOnIsSupportMediaCodec(String ffcodecname) {
+        Log.d(TAG, "callOnIsSupportMediaCodec  ffcodecname: " + ffcodecname);
+        return TXVideoSupportUitl.isSupportCodec(ffcodecname);
+    }
+
+    // 初始化 video mediacodec
+    public void callOnInitMediaCodecVideo(String mime, int width, int height, byte[] csd_01, byte[] csd_02) {
+        Log.d(TAG, "callOnInitMediaCodecVideo ");
+        if (iffmpegGLSurfaceListener != null) {
+            Surface surface = iffmpegGLSurfaceListener.getSurface();
+            if (surface != null) {
+                Log.d(TAG, "callOnInitMediaCodecVideo surface != null ");
+                if (iffmpegDecodeVideoListener != null) {
+                    iffmpegDecodeVideoListener.renderType(false);
+                }
+                TXMediaCodecVideoUtil.getInstance().createVideoCodec(surface, mime, width, height, csd_01, csd_02);
+            }
+        }
+    }
+
+    // 渲染数据
+    public void callOnDecodeAvPacket(int size, byte[] buffer) {
+        TXMediaCodecVideoUtil.getInstance().decodeAvPacket(size, buffer);
+    }
+
+    public void setSurface(Surface surface) {
+
     }
 
     public interface MyCallBack {

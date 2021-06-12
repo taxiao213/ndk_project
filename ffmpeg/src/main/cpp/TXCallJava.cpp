@@ -21,12 +21,20 @@ TXCallJava::TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj) {
         jmethodIdRecordTime = jniEnv->GetMethodID(aClass, JAVA_METHOD_RECORD_TIME, "(F)V");
         jmethodIdCutAudio = jniEnv->GetMethodID(aClass, JAVA_METHOD_CUT_AUDIO, "(I[B)V");
         jmethodIdRenderYUV = jniEnv->GetMethodID(aClass, JAVA_METHOD_RENDER_YUV, "(II[B[B[B)V");
+        jmethodIdIsSupportMediaCodec = jniEnv->GetMethodID(aClass,
+                                                           JAVA_METHOD_IS_SUPPORT_MEDIA_CODEC,
+                                                           "(Ljava/lang/String;)Z");
+        jmethodIdInitMediaCodecVideo = jniEnv->GetMethodID(aClass,
+                                                           JAVA_METHOD_INIT_MEDIA_CODEC_VIDEO,
+                                                           "(Ljava/lang/String;II[B[B)V");
+
+        jmethodIdDecodeAvPacket = jniEnv->GetMethodID(aClass, JAVA_METHOD_DECODE_AV_PACKET,
+                                                      "(I[B)V");
     }
 }
 
 TXCallJava::~TXCallJava() {
     if (jniEnv != NULL) {
-        jniEnv->DeleteGlobalRef(job);
         job = NULL;
         jniEnv = NULL;
     }
@@ -172,18 +180,18 @@ void TXCallJava::onCallOnCutAudio(int type, int sampleRate, int size, void *pcmB
     }
 }
 
-void TXCallJava::onCallOnRenderYUV(int type, int width, int height, void *y, void *u, void *v) {
+void TXCallJava::onCallOnRenderYUV(int type, int width, int height, uint8_t *y, uint8_t *u, uint8_t *v) {
     if (type == MAIN_THREAD) {
         // YUV  4:1:1
         int size = width * height;
         jbyteArray byteArrayY = jniEnv->NewByteArray(size);
-        jniEnv->SetByteArrayRegion(byteArrayY, 0, size, static_cast<const jbyte *>(y));
+        jniEnv->SetByteArrayRegion(byteArrayY, 0, size, reinterpret_cast<const jbyte *>(y));
 
         jbyteArray byteArrayU = jniEnv->NewByteArray(size / 4);
-        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(u));
+        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(u));
 
         jbyteArray byteArrayV = jniEnv->NewByteArray(size / 4);
-        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(v));
+        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(v));
 
         jniEnv->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
                                byteArrayV);
@@ -197,19 +205,92 @@ void TXCallJava::onCallOnRenderYUV(int type, int width, int height, void *y, voi
         }
         int size = width * height;
         jbyteArray byteArrayY = env->NewByteArray(size);
-        env->SetByteArrayRegion(byteArrayY, 0, size, static_cast<const jbyte *>(y));
+        env->SetByteArrayRegion(byteArrayY, 0, size, reinterpret_cast<const jbyte *>(y));
 
         jbyteArray byteArrayU = env->NewByteArray(size / 4);
-        env->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(u));
+        env->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(u));
 
         jbyteArray byteArrayV = env->NewByteArray(size / 4);
-        env->SetByteArrayRegion(byteArrayU, 0, size / 4, static_cast<const jbyte *>(v));
+        env->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(v));
 
         env->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
                             byteArrayV);
         env->DeleteLocalRef(byteArrayY);
         env->DeleteLocalRef(byteArrayU);
         env->DeleteLocalRef(byteArrayV);
+        javaVm->DetachCurrentThread();
+    }
+
+}
+
+bool TXCallJava::onCallIsSupportMediaCodec(int type, const char *s) {
+    bool support = false;
+    if (type == MAIN_THREAD) {
+        jstring codecName = jniEnv->NewStringUTF(s);
+        support = jniEnv->CallBooleanMethod(job, jmethodIdIsSupportMediaCodec, codecName);
+        jniEnv->DeleteLocalRef(codecName);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if (javaVm->AttachCurrentThread(&env, 0) != JNI_OK) {
+            return support;
+        }
+        jstring codecName = env->NewStringUTF(s);
+        support = env->CallBooleanMethod(job, jmethodIdIsSupportMediaCodec, codecName);
+        env->DeleteLocalRef(codecName);
+        javaVm->DetachCurrentThread();
+    }
+    return support;
+}
+
+void
+TXCallJava::onCallInitMediaCodecVideo(int type, const char *mime, int width, int height, int size,
+                                      uint8_t *csd_01,
+                                      int size2, uint8_t *csd_02) {
+    if (type == MAIN_THREAD) {
+        jstring string = jniEnv->NewStringUTF(mime);
+        jbyteArray csd1Array = jniEnv->NewByteArray(size);
+        jniEnv->SetByteArrayRegion(csd1Array, 0, size, reinterpret_cast<const jbyte *>(csd_01));
+        jbyteArray csd2Array = jniEnv->NewByteArray(size2);
+        jniEnv->SetByteArrayRegion(csd2Array, 0, size2, reinterpret_cast<const jbyte *>(csd_02));
+        jniEnv->CallVoidMethod(job, jmethodIdInitMediaCodecVideo, string, width, height, csd1Array,
+                               csd2Array);
+        jniEnv->DeleteLocalRef(string);
+        jniEnv->DeleteLocalRef(csd1Array);
+        jniEnv->DeleteLocalRef(csd2Array);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if ((javaVm->AttachCurrentThread(&env, 0) != JNI_OK)) {
+            return;
+        }
+        jstring string = env->NewStringUTF(mime);
+        jbyteArray csd1Array = env->NewByteArray(size);
+        env->SetByteArrayRegion(csd1Array, 0, size, reinterpret_cast<const jbyte *>(csd_01));
+        jbyteArray csd2Array = env->NewByteArray(size2);
+        env->SetByteArrayRegion(csd2Array, 0, size2, reinterpret_cast<const jbyte *>(csd_02));
+        env->CallVoidMethod(job, jmethodIdInitMediaCodecVideo, string, width, height, csd1Array,
+                            csd2Array);
+        env->DeleteLocalRef(string);
+        env->DeleteLocalRef(csd1Array);
+        env->DeleteLocalRef(csd2Array);
+        javaVm->DetachCurrentThread();
+    }
+}
+
+void TXCallJava::onCallDecodeAvPacket(int type, int size, uint8_t *buffer) {
+    if (type == MAIN_THREAD) {
+        jbyteArray csd1Array = jniEnv->NewByteArray(size);
+        jniEnv->SetByteArrayRegion(csd1Array, 0, size, reinterpret_cast<const jbyte *>(buffer));
+        jniEnv->CallVoidMethod(job, jmethodIdDecodeAvPacket, size, csd1Array);
+        jniEnv->DeleteLocalRef(csd1Array);
+    } else if (type == CHILD_THREAD) {
+        JNIEnv *env;
+        if ((javaVm->AttachCurrentThread(&env, 0) != JNI_OK)) {
+            return;
+        }
+        jbyteArray csd1Array = env->NewByteArray(size);
+        env->SetByteArrayRegion(csd1Array, 0, size, reinterpret_cast<const jbyte *>(buffer));
+        env->CallVoidMethod(job, jmethodIdDecodeAvPacket, size, csd1Array);
+        env->DeleteLocalRef(csd1Array);
         javaVm->DetachCurrentThread();
     }
 

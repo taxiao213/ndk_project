@@ -1,8 +1,11 @@
 package com.taxiao.cn.apple.opengl;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.view.Surface;
 
 
 import com.taxiao.cn.apple.R;
@@ -22,7 +25,7 @@ import javax.microedition.khronos.opengles.GL10;
  * CSDN:http://blog.csdn.net/yin13753884368/article
  * Github:https://github.com/taxiao213
  */
-public class TXVideoRender implements GLSurfaceView.Renderer {
+public class TXVideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
     private String TAG = TXVideoRender.this.getClass().getSimpleName();
 
     // 顶点坐标
@@ -58,6 +61,18 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     private ByteBuffer y;
     private ByteBuffer u;
     private ByteBuffer v;
+    public static final int RENDER_YUV = 1;
+    public static final int RENDER_MEDIACODEC = 2;
+    private int renderType = RENDER_YUV;
+
+    private int mediacodecProgram;
+    private int mediacodec_av_position;
+    private int mediacodec_af_position;
+    private int[] mediacodec_textureId;
+    private Surface surface;
+    private SurfaceTexture surfaceTexture;
+    private int mediacodec_sTexture;
+    private GLOnFrameAvailable glOnFrameAvailable;
 
     public TXVideoRender(Context context) {
         this.mContext = context;
@@ -78,6 +93,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         initRenderYUV();
+        initRenderMediaCodec();
     }
 
     @Override
@@ -89,13 +105,18 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClearColor(0f, 0f, 0f, 1f);
-        renderYUV();
+        if (renderType == RENDER_YUV) {
+            renderYUV();
+        } else if (renderType == RENDER_MEDIACODEC) {
+            renderMediaCodec();
+        }
         // 12.绘制四边形
         // renderYUV 判断条件后会导致闪屏
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 
     private void initRenderYUV() {
+        LogUtils.d(TAG, "initRenderYUV ");
         // 2.加载 shader
         String vertexShader = ShaderUtils.readRawTxt(mContext, R.raw.vertex_video_shader);
         String fragmentShader = ShaderUtils.readRawTxt(mContext, R.raw.fragment_video_shader);
@@ -127,6 +148,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     }
 
     private void renderYUV() {
+        LogUtils.d(TAG, "renderYUV ");
         if (width_yuv > 0 && height_yuv > 0 && y != null && u != null && v != null /*&& program > 0*/) {
             // 9.使用渲染器
             GLES20.glUseProgram(program);
@@ -165,6 +187,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
     }
 
     public void setYUVRenderData(int width, int height, byte[] y, byte[] u, byte[] v) {
+        LogUtils.d(TAG, "setYUVRenderData ");
         this.width_yuv = width;
         this.height_yuv = height;
         this.y = ByteBuffer.wrap(y);
@@ -172,4 +195,80 @@ public class TXVideoRender implements GLSurfaceView.Renderer {
         this.v = ByteBuffer.wrap(v);
     }
 
+    private void initRenderMediaCodec() {
+        LogUtils.d(TAG, "initRenderMediaCodec ");
+        // 加载shader
+        String vertexShader = ShaderUtils.readRawTxt(mContext, R.raw.vertex_video_mediacodec_shader);
+        String fragmentShader = ShaderUtils.readRawTxt(mContext, R.raw.fragment_video_mediacodec_shader);
+        mediacodecProgram = ShaderUtils.createProgram(vertexShader, fragmentShader);
+        if (mediacodecProgram > 0) {
+            // 4.得到着色器中的属性
+            mediacodec_av_position = GLES20.glGetAttribLocation(mediacodecProgram, "av_Position");
+            mediacodec_af_position = GLES20.glGetAttribLocation(mediacodecProgram, "af_Position");
+            mediacodec_sTexture = GLES20.glGetUniformLocation(mediacodecProgram, "sTexture");
+
+            mediacodec_textureId = new int[1];
+            // 5.创建纹理
+            GLES20.glGenTextures(1, mediacodec_textureId, 0);
+
+            // 6.绑定纹理
+
+            // 7.设置环绕和过滤方式 环绕（超出纹理坐标范围）：（s==x t==y GL_REPEAT 重复）
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+            // 8.过滤（纹理像素映射到坐标点）：（缩小、放大：GL_LINEAR线性）
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+            surfaceTexture = new SurfaceTexture(mediacodec_textureId[0]);
+            surface = new Surface(surfaceTexture);
+            surfaceTexture.setOnFrameAvailableListener(this);
+        }
+    }
+
+    /**
+     * mediacodec 渲染
+     */
+    private void renderMediaCodec() {
+        LogUtils.d(TAG, "renderMediaCodec ");
+        if (surfaceTexture != null) {
+            surfaceTexture.updateTexImage();
+            GLES20.glUseProgram(mediacodecProgram);
+            GLES20.glEnableVertexAttribArray(av_position);
+            GLES20.glVertexAttribPointer(av_position, 2, GLES20.GL_FLOAT, false, 8, vetexBuffer);
+
+            GLES20.glEnableVertexAttribArray(af_position);
+            GLES20.glVertexAttribPointer(af_position, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
+
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mediacodec_textureId[0]);
+            GLES20.glUniform1i(mediacodec_sTexture, 0);
+        }
+    }
+
+    public Surface getSurface() {
+        return surface;
+    }
+
+    public void setRenderType(int renderType) {
+        this.renderType = renderType;
+    }
+
+    @Override
+    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        if (glOnFrameAvailable != null) {
+            glOnFrameAvailable.onAvailable();
+        }
+    }
+
+    public void setGlOnFrameAvailable(GLOnFrameAvailable glOnFrameAvailable) {
+        this.glOnFrameAvailable = glOnFrameAvailable;
+    }
+
+    public interface GLOnFrameAvailable {
+        void onAvailable();
+    }
+
+    public interface GLOnSurfaceCreateListener {
+        void onSurfaceCreate(Surface surface);
+    }
 }

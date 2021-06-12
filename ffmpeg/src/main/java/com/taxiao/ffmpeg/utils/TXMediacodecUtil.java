@@ -1,15 +1,10 @@
 package com.taxiao.ffmpeg.utils;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
-
-import androidx.annotation.MainThread;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -62,7 +57,7 @@ public class TXMediacodecUtil {
         handler.post(audioRunnable);
     }
 
-    public void destroy() {
+    public void release() {
         Log.d(TAG, " mediacode destroy");
         try {
             if (handlerThread != null) {
@@ -114,7 +109,7 @@ public class TXMediacodecUtil {
             try {
                 initMediacodec(sampleRate);
             } catch (Exception e) {
-                destroy();
+                release();
                 e.printStackTrace();
             }
         }

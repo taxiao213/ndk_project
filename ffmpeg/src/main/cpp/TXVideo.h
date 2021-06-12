@@ -14,6 +14,9 @@ extern "C" {
 #include <libswscale/swscale.h>
 };
 
+#define CODEC_YUV 0
+#define CODEC_MEDIACODEC 1
+
 class TXVideo {
 public:
     int streamVideoIndex = -1;
@@ -29,6 +32,8 @@ public:
     double clock = 0;
     double delayTime = 0;
     double defaultDelayTime = 0;
+    int codecType = 0;
+    AVBSFContext *abs_ctx = NULL;
 public:
     TXVideo(TXPlayStatus *playStatus, TXCallJava *callJava);
 
@@ -38,7 +43,7 @@ public:
 
     void release();
 
-    double getFrameDiffTime(AVFrame *avFrame);
+    double getFrameDiffTime(AVFrame *avFrame, AVPacket *avPacket);
 
     double getDelayTime(double diff);
 

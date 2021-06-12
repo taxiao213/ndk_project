@@ -17,6 +17,10 @@
 #define JAVA_METHOD_RECORD_TIME "callOnRecordTime"
 #define JAVA_METHOD_CUT_AUDIO "callOnCutAudio"
 #define JAVA_METHOD_RENDER_YUV "callOnRenderYUV"
+#define JAVA_METHOD_IS_SUPPORT_MEDIA_CODEC "callOnIsSupportMediaCodec"
+#define JAVA_METHOD_INIT_MEDIA_CODEC_VIDEO "callOnInitMediaCodecVideo"
+#define JAVA_METHOD_DECODE_AV_PACKET "callOnDecodeAvPacket"
+
 #define MAIN_THREAD 1
 #define CHILD_THREAD 2
 
@@ -35,6 +39,9 @@ public:
     jmethodID jmethodIdRecordTime;
     jmethodID jmethodIdCutAudio;
     jmethodID jmethodIdRenderYUV;
+    jmethodID jmethodIdIsSupportMediaCodec;
+    jmethodID jmethodIdInitMediaCodecVideo;
+    jmethodID jmethodIdDecodeAvPacket;
 
 public:
     TXCallJava(JavaVM *vm, JNIEnv *env, jobject *obj);
@@ -59,7 +66,17 @@ public:
 
     void onCallOnCutAudio(int type, int sampleRate, int size, void *pcmBuffer);
 
-    void onCallOnRenderYUV(int type, int width, int height, void *y, void *u, void *v);
+    void onCallOnRenderYUV(int type, int width, int height, uint8_t *y, uint8_t *u, uint8_t *v);
+
+    bool onCallIsSupportMediaCodec(int type, const char *s);
+
+    void
+    onCallInitMediaCodecVideo(int type, const char *mime, int width, int height, int size,
+                                uint8_t *csd_01,
+                              int size2,
+                                uint8_t *csd_02);
+
+    void onCallDecodeAvPacket(int type, int size, uint8_t *buffer);
 };
 
 

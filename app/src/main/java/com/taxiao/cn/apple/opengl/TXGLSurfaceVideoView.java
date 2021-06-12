@@ -3,6 +3,7 @@ package com.taxiao.cn.apple.opengl;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.view.Surface;
 
 /**
  * 渲染视频
@@ -27,6 +28,12 @@ public class TXGLSurfaceVideoView extends GLSurfaceView {
         renderer = new TXVideoRender(context);
         setRenderer(renderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        renderer.setGlOnFrameAvailable(new TXVideoRender.GLOnFrameAvailable() {
+            @Override
+            public void onAvailable() {
+                requestRender();
+            }
+        });
     }
 
     public void setYUVData(int width, int height, byte[] y, byte[] u, byte[] v) {
@@ -35,4 +42,19 @@ public class TXGLSurfaceVideoView extends GLSurfaceView {
             requestRender();
         }
     }
+
+
+    public Surface getSurface() {
+        if (renderer != null) {
+            return renderer.getSurface();
+        }
+        return null;
+    }
+
+    public void setRenderType(boolean renderYUV) {
+        if (renderer != null) {
+            renderer.setRenderType(renderYUV ? TXVideoRender.RENDER_YUV : TXVideoRender.RENDER_MEDIACODEC);
+        }
+    }
+
 }

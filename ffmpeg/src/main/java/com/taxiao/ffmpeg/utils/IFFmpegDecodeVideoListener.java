@@ -10,4 +10,6 @@ package com.taxiao.ffmpeg.utils;
 public interface IFFmpegDecodeVideoListener {
 
     void onRenderYUV(int width, int height, byte[] y, byte[] u, byte[] v);
+
+    void renderType(boolean renderYUV);
 }

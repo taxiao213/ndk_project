@@ -134,6 +134,56 @@ void TXFFmpeg::start() {
         return;
     }
     pVideo->txAudio = pAudio;
+    const char *name = pVideo->avCodecContext->codec->name;
+    if (pVideo->txCallJava->onCallIsSupportMediaCodec(CHILD_THREAD, name)) {
+        SDK_LOG_D("start 支持硬解码");
+        // 1.找到相应解码器的过滤器
+        if (strcasecmp(name, "h264") == 0) {
+            bsFilter = av_bsf_get_by_name("h264_mp4toannexb");
+        } else if (strcasecmp(name, "h265") == 0) {
+            bsFilter = av_bsf_get_by_name("hevc_mp4toannexb");
+        }
+        if (bsFilter == NULL) {
+            goto end;
+        }
+        // 2.初始化过滤器上下文
+        if (av_bsf_alloc(bsFilter, &pVideo->abs_ctx) != 0) {
+            pVideo->codecType = CODEC_YUV;
+            goto end;
+        }
+        // 3.添加解码器属性
+        if (avcodec_parameters_copy(pVideo->abs_ctx->par_in, pVideo->avCodecParameters) < 0) {
+            av_bsf_free(&pVideo->abs_ctx);
+            pVideo->abs_ctx = NULL;
+            pVideo->codecType = CODEC_YUV;
+            goto end;
+        }
+        // 4.初始化过滤器上下文
+        if (av_bsf_init(pVideo->abs_ctx) != 0) {
+            av_bsf_free(&pVideo->abs_ctx);
+            pVideo->abs_ctx = NULL;
+            pVideo->codecType = CODEC_YUV;
+            goto end;
+        }
+        pVideo->codecType = CODEC_MEDIACODEC;
+        pVideo->abs_ctx->time_base_in = pVideo->time_base;
+    } else {
+        SDK_LOG_D("start 不支持硬解码");
+        pVideo->codecType = CODEC_YUV;
+    }
+    end:
+    // 判断是否硬编码
+    if (pVideo->codecType == CODEC_MEDIACODEC) {
+        SDK_LOG_D("start 初始化硬解码");
+        pVideo->txCallJava->onCallInitMediaCodecVideo(CHILD_THREAD,
+                                                      name,
+                                                      pVideo->avCodecContext->width,
+                                                      pVideo->avCodecContext->height,
+                                                      pVideo->avCodecContext->extradata_size,
+                                                      pVideo->avCodecContext->extradata,
+                                                      pVideo->avCodecContext->extradata_size,
+                                                      pVideo->avCodecContext->extradata);
+    }
     int count = 0;
     pAudio->play();
     pVideo->play();
@@ -146,11 +196,11 @@ void TXFFmpeg::start() {
             continue;
         }
 
-// 解决视频卡的问题
-//        if (pAudio->queue->getQueueSize() > 40) {
-//            av_usleep(SLEEP_TIME);
-//            continue;
-//        }
+        // 解决视频卡的问题
+        if (pAudio->queue->getQueueSize() > 40) {
+            av_usleep(SLEEP_TIME);
+            continue;
+        }
         AVPacket *pPacket = av_packet_alloc();
         int readFrame = av_read_frame(pContext, pPacket);
         if (readFrame == 0) {
