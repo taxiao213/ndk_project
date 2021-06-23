@@ -12,9 +12,14 @@ import com.taxiao.cn.apple.R;
 import com.taxiao.cn.apple.util.LogUtils;
 import com.taxiao.cn.apple.util.ShaderUtils;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -104,7 +109,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnF
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glClearColor(0f, 0f, 0f, 1f);
+        GLES20.glClearColor(0f, 0f, 0f, 0f);
         if (renderType == RENDER_YUV) {
             renderYUV();
         } else if (renderType == RENDER_MEDIACODEC) {
@@ -164,17 +169,16 @@ public class TXVideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnF
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[0]);
             // level 级别 border 边框
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, width_yuv, height_yuv, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, y);
+            GLES20.glUniform1i(sampler_y, 0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[1]);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, width_yuv / 2, height_yuv / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, u);
+            GLES20.glUniform1i(sampler_u, 1);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId_yuv[2]);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, width_yuv / 2, height_yuv / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, v);
-
-            GLES20.glUniform1i(sampler_y, 0);
-            GLES20.glUniform1i(sampler_u, 1);
             GLES20.glUniform1i(sampler_v, 2);
 
             y.clear();
@@ -242,6 +246,7 @@ public class TXVideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnF
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mediacodec_textureId[0]);
             GLES20.glUniform1i(mediacodec_sTexture, 0);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         }
     }
 

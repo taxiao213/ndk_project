@@ -180,7 +180,9 @@ void TXCallJava::onCallOnCutAudio(int type, int sampleRate, int size, void *pcmB
     }
 }
 
-void TXCallJava::onCallOnRenderYUV(int type, int width, int height, uint8_t *y, uint8_t *u, uint8_t *v) {
+void
+TXCallJava::onCallOnRenderYUV(int type, int width, int height, uint8_t *y, uint8_t *u, uint8_t *v) {
+    SDK_LOG_D("onCallOnRenderYUV width: %d, height: %d", width, height);
     if (type == MAIN_THREAD) {
         // YUV  4:1:1
         int size = width * height;
@@ -191,7 +193,7 @@ void TXCallJava::onCallOnRenderYUV(int type, int width, int height, uint8_t *y, 
         jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(u));
 
         jbyteArray byteArrayV = jniEnv->NewByteArray(size / 4);
-        jniEnv->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(v));
+        jniEnv->SetByteArrayRegion(byteArrayV, 0, size / 4, reinterpret_cast<const jbyte *>(v));
 
         jniEnv->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
                                byteArrayV);
@@ -211,7 +213,7 @@ void TXCallJava::onCallOnRenderYUV(int type, int width, int height, uint8_t *y, 
         env->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(u));
 
         jbyteArray byteArrayV = env->NewByteArray(size / 4);
-        env->SetByteArrayRegion(byteArrayU, 0, size / 4, reinterpret_cast<const jbyte *>(v));
+        env->SetByteArrayRegion(byteArrayV, 0, size / 4, reinterpret_cast<const jbyte *>(v));
 
         env->CallVoidMethod(job, jmethodIdRenderYUV, width, height, byteArrayY, byteArrayU,
                             byteArrayV);

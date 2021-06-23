@@ -34,6 +34,7 @@ public:
     double defaultDelayTime = 0;
     int codecType = 0;
     AVBSFContext *abs_ctx = NULL;
+    FILE *outFile = NULL;
 public:
     TXVideo(TXPlayStatus *playStatus, TXCallJava *callJava);
 

@@ -172,6 +172,8 @@ void TXFFmpeg::start() {
         pVideo->codecType = CODEC_YUV;
     }
     end:
+    // TODO: 手动设置支持软编码
+//    pVideo->codecType = CODEC_YUV;
     // 判断是否硬编码
     if (pVideo->codecType == CODEC_MEDIACODEC) {
         SDK_LOG_D("start 初始化硬解码");

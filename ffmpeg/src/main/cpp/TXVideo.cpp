@@ -9,6 +9,7 @@ TXVideo::TXVideo(TXPlayStatus *playStatus, TXCallJava *callJava) {
     this->txCallJava = callJava;
     this->txQueue = new TXQueue(txPlayStatus);
     pthread_mutex_init(&pthreadMutex, NULL);
+    outFile = fopen("/data/data/com.taxiao.cn.apple/cache/test2.yuv", "w");
 }
 
 TXVideo::~TXVideo() {
@@ -131,6 +132,18 @@ void *playVideo(void *data) {
                                                                    pFrame->data[0],
                                                                    pFrame->data[1],
                                                                    pFrame->data[2]);
+                            // 存储 YUV 数据到本地目录，测试用
+//                            if (txVideo->outFile != NULL) {
+//                                fwrite(pFrame->data[0], 1, txVideo->avCodecContext->width *
+//                                                        txVideo->avCodecContext->height,
+//                                       txVideo->outFile);
+//                                fwrite(pFrame->data[1], 1, txVideo->avCodecContext->width *
+//                                                           txVideo->avCodecContext->height/4,
+//                                       txVideo->outFile);
+//                                fwrite(pFrame->data[2], 1, txVideo->avCodecContext->width *
+//                                                           txVideo->avCodecContext->height/4,
+//                                       txVideo->outFile);
+//                            }
                         }
 
                     } else {
