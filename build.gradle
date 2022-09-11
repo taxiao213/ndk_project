@@ -6,7 +6,7 @@ buildscript {
         jcenter()
         // 强烈推荐阿里云镜像更新
         maven {
-            url "http://maven.aliyun.com/nexus/content/groups/public/"
+            url "https://maven.aliyun.com/repository/public"
         }
     }
     dependencies {
@@ -22,7 +22,7 @@ allprojects {
         jcenter()
         // 强烈推荐阿里云镜像更新
         maven {
-            url "http://maven.aliyun.com/nexus/content/groups/public/"
+            url "https://maven.aliyun.com/repository/public"
         }
     }
 }
